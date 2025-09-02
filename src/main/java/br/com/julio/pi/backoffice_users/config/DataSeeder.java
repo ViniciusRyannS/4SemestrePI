@@ -25,7 +25,11 @@ public class DataSeeder {
                 u.setNome("Administrador");
                 u.setCpf("00000000000");
                 u.setEmail("admin@pi.com");
+<<<<<<< HEAD
                 String hash = senhaService.gerarHash("admin123"); // sempre hash!
+=======
+                String hash = senhaService.gerarHash("admin123");
+>>>>>>> 1931bad (corrigido edicao)
                 u.setSenha(hash);
                 u.setGrupo(Grupo.ADMINISTRADOR);
                 u.setStatus(Status.ATIVO);

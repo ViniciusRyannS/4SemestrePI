@@ -56,9 +56,12 @@ public class ConsoleController {
             if (isAdmin(logado)) {
                 System.out.println("1) Listar usuários");
                 System.out.println("2) Incluir usuário");
+<<<<<<< HEAD
                 System.out.println("3) Alterar usuário");
                 System.out.println("4) Alterar senha de um usuário");
                 System.out.println("5) Ativar/Desativar usuário");
+=======
+>>>>>>> 1931bad (corrigido edicao)
                 System.out.println("0) Sair");
             } else {
                 System.out.println("1) Listar usuários");
@@ -74,6 +77,7 @@ public class ConsoleController {
                     if (!isAdmin(logado)) { deny(); break; }
                     incluirUsuario();
                 }
+<<<<<<< HEAD
                 case 3 -> {
                     if (!isAdmin(logado)) { deny(); break; }
                     alterarUsuario();
@@ -86,6 +90,8 @@ public class ConsoleController {
                     if (!isAdmin(logado)) { deny(); break; }
                     toggleStatus();
                 }
+=======
+>>>>>>> 1931bad (corrigido edicao)
                 case 0 -> {
                     System.out.println("Saindo...");
                     return; 
@@ -96,6 +102,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
     private void listarUsuarios() {
         List<Usuario> users = usuarioService.findAll();
         System.out.println();
@@ -143,6 +150,101 @@ public class ConsoleController {
             case 3 -> toggleStatusPorId(id);
             default -> { /* volta */ }
         }
+=======
+    private void listarUsuarios(Usuario logado) {
+        List<Usuario> users = usuarioService.findAll();
+
+        System.out.println("Listar Usuário");
+        printSeparator();
+
+        System.out.printf("%-3s | %-20s | %-28s | %-8s | %-13s%n",
+                "Id", "Nome", "e-mail", "status", "Grupo");
+        printSeparator();
+
+        for (Usuario u : users) {
+            String id = String.valueOf(u.getId());
+            String nome = crop(u.getNome(), 20);
+            String email = crop(u.getEmail(), 28);
+            String status = u.getStatus().name().toLowerCase();
+            String grupo = (u.getGrupo() == Grupo.ADMINISTRADOR ? "Administrador" : "Estoquista");
+
+            System.out.printf("%-3s | %-20s | %-28s | %-8s | %-13s%n",
+                    id, nome, email, status, grupo);
+        }
+        printSeparator();
+
+        String suffix = isAdmin(logado) ? ", 0 para voltar e i para incluir => " : ", 0 para voltar => ";
+        System.out.print("Entre com o id para editar/ativar/inativar" + suffix);
+        String resp = in.nextLine().trim();
+
+        if (resp.equalsIgnoreCase("0") || resp.isBlank()) {
+            return;
+        }
+        if (resp.equalsIgnoreCase("i")) {
+            if (!isAdmin(logado)) { deny(); return; }
+            incluirUsuario();
+            return;
+        }
+
+        try {
+            long id = Long.parseLong(resp);
+            Optional<Usuario> opt = usuarioService.findById(id);
+            if (opt.isEmpty()) {
+                System.out.println(">> Usuário não encontrado.");
+                return;
+            }
+            if (!isAdmin(logado)) {
+                System.out.println(">> Acesso negado: apenas administradores podem editar.");
+                return;
+            }
+            telaEdicaoUsuario(opt.get()); 
+        } catch (NumberFormatException ex) {
+            System.out.println(">> Valor inválido.");
+        }
+    }
+
+    private void telaEdicaoUsuario(Usuario u) {
+        while (true) {
+            printDetalheUsuario(u);
+            System.out.println("Opções");
+            System.out.println("  1) Alterar usuário");
+            System.out.println("  2) Alterar senha");
+            System.out.println("  3) Ativar/Desativar");
+            System.out.println("  4) Voltar Listar Usuário");
+            System.out.print("\nEntre com a opção (1,2,3,4) => ");
+
+            int op = lerIntSeguro();
+            switch (op) {
+                case 1 -> {
+                    if (alterarUsuario(u.getId())) {
+                        u = usuarioService.findById(u.getId()).orElse(u);
+                    }
+                }
+                case 2 -> alterarSenha(u.getId());
+                case 3 -> {
+                    Usuario toggled = usuarioService.toggleStatus(u.getId());
+                    System.out.println(">> Status atualizado para: " + toggled.getStatus().name().toLowerCase());
+                    u = toggled;
+                }
+                case 4 -> { return; } 
+                default -> System.out.println("Opção inválida!");
+            }
+            System.out.println();
+        }
+    }
+
+    private void printDetalheUsuario(Usuario u) {
+        System.out.println();
+        System.out.println("Opção de edição de usuário");
+        System.out.println();
+        System.out.println("Id: " + u.getId());
+        System.out.println("Nome: " + u.getNome());
+        System.out.println("Cpf: " + maskCpf(u.getCpf()));
+        System.out.println("E-mail: " + u.getEmail());
+        System.out.println("Status: " + u.getStatus().name().toLowerCase());
+        System.out.println("Grupo: " + (u.getGrupo() == Grupo.ADMINISTRADOR ? "Administrador" : "Estoquista"));
+        printSeparator();
+>>>>>>> 1931bad (corrigido edicao)
     }
 
     private void incluirUsuario() {
@@ -163,10 +265,13 @@ public class ConsoleController {
 
         System.out.print("E-mail: ");
         dto.setEmail(in.nextLine().trim());
+<<<<<<< HEAD
         if (!emailValido(dto.getEmail())) {
             System.out.println(">> E-mail inválido.");
             return;
         }
+=======
+>>>>>>> 1931bad (corrigido edicao)
 
         System.out.print("Senha: ");
         dto.setSenha(in.nextLine().trim());
@@ -181,8 +286,11 @@ public class ConsoleController {
         int g = lerIntSeguro();
         dto.setGrupo(g == 1 ? Grupo.ADMINISTRADOR : Grupo.ESTOQUISTA);
 
+<<<<<<< HEAD
         if (!confirmar("Confirmar inclusão?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
         try {
             Usuario novo = usuarioService.create(dto);
             System.out.println(">> Usuário criado com ID " + novo.getId());
@@ -191,6 +299,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
     private void alterarUsuario() {
         System.out.println();
         System.out.println("--- Alterar Usuário ---");
@@ -209,6 +318,18 @@ public class ConsoleController {
         Usuario existente = opt.get();
         printUsuario(existente);
 
+=======
+    private boolean alterarUsuario(long id) {
+        System.out.println();
+        System.out.println("--- Alterar Usuário ---");
+
+        Optional<Usuario> opt = usuarioService.findById(id);
+        if (opt.isEmpty()) {
+            System.out.println(">> Usuário não encontrado.");
+            return false;
+        }
+
+>>>>>>> 1931bad (corrigido edicao)
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
 
         System.out.print("Novo nome: ");
@@ -218,7 +339,11 @@ public class ConsoleController {
         String cpf = in.nextLine().trim();
         if (!CpfValidator.isValid(cpf)) {
             System.out.println(">> CPF inválido.");
+<<<<<<< HEAD
             return;
+=======
+            return false;
+>>>>>>> 1931bad (corrigido edicao)
         }
         dto.setCpf(cpf);
 
@@ -226,6 +351,7 @@ public class ConsoleController {
         int g = lerIntSeguro();
         dto.setGrupo(g == 1 ? Grupo.ADMINISTRADOR : Grupo.ESTOQUISTA);
 
+<<<<<<< HEAD
         if (!confirmar("Confirmar alterações?")) return;
 
         try {
@@ -246,13 +372,32 @@ public class ConsoleController {
 
     
     private void alterarSenhaPorId(long id) {
+=======
+        try {
+            Usuario upd = usuarioService.update(id, dto);
+            System.out.println(">> Usuário atualizado: " + upd.getNome());
+            return true;
+        } catch (Exception e) {
+            System.out.println(">> Erro ao alterar: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void alterarSenha(long id) {
+        System.out.println();
+        System.out.println("--- Alterar Senha ---");
+
+>>>>>>> 1931bad (corrigido edicao)
         Optional<Usuario> opt = usuarioService.findById(id);
         if (opt.isEmpty()) {
             System.out.println(">> Usuário não encontrado.");
             return;
         }
+<<<<<<< HEAD
         Usuario u = opt.get();
         printUsuario(u);
+=======
+>>>>>>> 1931bad (corrigido edicao)
 
         AlterarSenhaDTO dto = new AlterarSenhaDTO();
         System.out.print("Nova senha: ");
@@ -265,8 +410,11 @@ public class ConsoleController {
             return;
         }
 
+<<<<<<< HEAD
         if (!confirmar("Confirmar alteração de senha?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
         try {
             usuarioService.alterarSenha(id, dto.getNovaSenha());
             System.out.println(">> Senha alterada com sucesso.");
@@ -275,6 +423,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
     private void toggleStatus() {
         System.out.println();
         System.out.println("--- Ativar/Desativar Usuário ---");
@@ -311,6 +460,8 @@ public class ConsoleController {
        HELPERS
        ========================= */
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private boolean isAdmin(Usuario u) {
         return u.getGrupo() == Grupo.ADMINISTRADOR;
     }
@@ -319,6 +470,7 @@ public class ConsoleController {
         System.out.println("Acesso negado: apenas administradores.");
     }
 
+<<<<<<< HEAD
     private boolean emailValido(String e) {
         return e != null && e.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
@@ -336,6 +488,8 @@ public class ConsoleController {
         );
     }
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private int lerIntSeguro() {
         while (true) {
             try {
@@ -357,4 +511,28 @@ public class ConsoleController {
             }
         }
     }
+<<<<<<< HEAD
+=======
+
+    private void printSeparator() {
+        System.out.println("---------------------------------------------------------------------");
+    }
+
+    private String crop(String s, int max) {
+        if (s == null) return "";
+        if (s.length() <= max) return s;
+        return s.substring(0, Math.max(0, max - 1)) + "…";
+    }
+
+    private String maskCpf(String cpf) {
+        if (cpf == null) return "";
+        String digits = cpf.replaceAll("\\D", "");
+        if (digits.length() != 11) return cpf; 
+        return String.format("%s.%s.%s-%s",
+                digits.substring(0, 3),
+                digits.substring(3, 6),
+                digits.substring(6, 9),
+                digits.substring(9));
+    }
+>>>>>>> 1931bad (corrigido edicao)
 }
