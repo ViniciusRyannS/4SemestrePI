@@ -57,9 +57,12 @@ public class ConsoleController {
                 System.out.println("1) Listar usuários");
                 System.out.println("2) Incluir usuário");
 <<<<<<< HEAD
+<<<<<<< HEAD
                 System.out.println("3) Alterar usuário");
                 System.out.println("4) Alterar senha de um usuário");
                 System.out.println("5) Ativar/Desativar usuário");
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
                 System.out.println("0) Sair");
@@ -78,6 +81,7 @@ public class ConsoleController {
                     incluirUsuario();
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
                 case 3 -> {
                     if (!isAdmin(logado)) { deny(); break; }
                     alterarUsuario();
@@ -92,6 +96,8 @@ public class ConsoleController {
                 }
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
                 case 0 -> {
                     System.out.println("Saindo...");
                     return; 
@@ -102,6 +108,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     private void listarUsuarios() {
         List<Usuario> users = usuarioService.findAll();
@@ -151,6 +158,8 @@ public class ConsoleController {
             default -> { /* volta */ }
         }
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private void listarUsuarios(Usuario logado) {
         List<Usuario> users = usuarioService.findAll();
 
@@ -244,6 +253,9 @@ public class ConsoleController {
         System.out.println("Status: " + u.getStatus().name().toLowerCase());
         System.out.println("Grupo: " + (u.getGrupo() == Grupo.ADMINISTRADOR ? "Administrador" : "Estoquista"));
         printSeparator();
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
     }
 
@@ -266,10 +278,13 @@ public class ConsoleController {
         System.out.print("E-mail: ");
         dto.setEmail(in.nextLine().trim());
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!emailValido(dto.getEmail())) {
             System.out.println(">> E-mail inválido.");
             return;
         }
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 
@@ -287,8 +302,11 @@ public class ConsoleController {
         dto.setGrupo(g == 1 ? Grupo.ADMINISTRADOR : Grupo.ESTOQUISTA);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!confirmar("Confirmar inclusão?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
         try {
@@ -299,6 +317,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     private void alterarUsuario() {
         System.out.println();
@@ -319,6 +338,8 @@ public class ConsoleController {
         printUsuario(existente);
 
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private boolean alterarUsuario(long id) {
         System.out.println();
         System.out.println("--- Alterar Usuário ---");
@@ -329,6 +350,9 @@ public class ConsoleController {
             return false;
         }
 
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
         UsuarioUpdateDTO dto = new UsuarioUpdateDTO();
 
@@ -340,7 +364,11 @@ public class ConsoleController {
         if (!CpfValidator.isValid(cpf)) {
             System.out.println(">> CPF inválido.");
 <<<<<<< HEAD
+<<<<<<< HEAD
             return;
+=======
+            return false;
+>>>>>>> 1931bad (corrigido edicao)
 =======
             return false;
 >>>>>>> 1931bad (corrigido edicao)
@@ -351,6 +379,7 @@ public class ConsoleController {
         int g = lerIntSeguro();
         dto.setGrupo(g == 1 ? Grupo.ADMINISTRADOR : Grupo.ESTOQUISTA);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
         if (!confirmar("Confirmar alterações?")) return;
 
@@ -373,6 +402,8 @@ public class ConsoleController {
     
     private void alterarSenhaPorId(long id) {
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
         try {
             Usuario upd = usuarioService.update(id, dto);
             System.out.println(">> Usuário atualizado: " + upd.getNome());
@@ -387,6 +418,9 @@ public class ConsoleController {
         System.out.println();
         System.out.println("--- Alterar Senha ---");
 
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
         Optional<Usuario> opt = usuarioService.findById(id);
         if (opt.isEmpty()) {
@@ -394,8 +428,11 @@ public class ConsoleController {
             return;
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
         Usuario u = opt.get();
         printUsuario(u);
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 
@@ -411,8 +448,11 @@ public class ConsoleController {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!confirmar("Confirmar alteração de senha?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
         try {
@@ -423,6 +463,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     private void toggleStatus() {
         System.out.println();
@@ -462,6 +503,8 @@ public class ConsoleController {
 
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private boolean isAdmin(Usuario u) {
         return u.getGrupo() == Grupo.ADMINISTRADOR;
     }
@@ -470,6 +513,7 @@ public class ConsoleController {
         System.out.println("Acesso negado: apenas administradores.");
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     private boolean emailValido(String e) {
         return e != null && e.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
@@ -488,6 +532,8 @@ public class ConsoleController {
         );
     }
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
     private int lerIntSeguro() {
@@ -512,7 +558,10 @@ public class ConsoleController {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
 
     private void printSeparator() {
         System.out.println("---------------------------------------------------------------------");
@@ -534,5 +583,8 @@ public class ConsoleController {
                 digits.substring(6, 9),
                 digits.substring(9));
     }
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
 }

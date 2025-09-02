@@ -31,7 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+<<<<<<< HEAD
 
 
 ### Banco de Dados H2 ###
 data/pi_backoffice.mv.db
+=======
+>>>>>>> 1931bad (corrigido edicao)
