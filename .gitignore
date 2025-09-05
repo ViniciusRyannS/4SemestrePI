@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+### Banco de Dados H2 ###
+data/pi_backoffice.mv.db
