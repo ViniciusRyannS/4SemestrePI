@@ -13,6 +13,14 @@ target/
 .springBeans
 .sts4-cache
 
+# H2 DB
+data/
+*.mv.db
+*.h2.db
+*.trace.db
+*.lock.db
+
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -31,3 +39,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
