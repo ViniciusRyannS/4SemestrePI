@@ -18,7 +18,7 @@ public class DataSeeder {
     @Order(1)
     CommandLineRunner seedUsuarios(UsuarioRepository repo, SenhaService senhaService) {
         return args -> {
-            System.out.println(">> [SEED] Iniciando. Total antes = " + repo.count());
+           
 
             if (!repo.existsByEmail("admin@pi.com")) {
                 Usuario u = new Usuario();
@@ -31,13 +31,12 @@ public class DataSeeder {
                 u.setStatus(Status.ATIVO);
 
                 repo.save(u);
-                System.out.println(">> [SEED] ADMIN criado (email=admin@pi.com)");
-                System.out.println(">> [SEED] HASH salvo = " + hash);
+                
             } else {
-                System.out.println(">> [SEED] ADMIN já existe (não vou duplicar).");
+                System.out.println("");
             }
 
-            System.out.println(">> [SEED] Concluído. Total depois = " + repo.count());
+            System.out.println("" + repo.count());
         };
     }
 }
