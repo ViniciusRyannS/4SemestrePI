@@ -32,9 +32,18 @@ build/
 ### VS Code ###
 .vscode/
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 ### Banco de Dados H2 ###
 data/pi_backoffice.mv.db
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+
+/target/
+imagens/
+data/
+*.log
+*.zip
+>>>>>>> 3861d32 (organizando as ultimas alterações para a Sprint 2)
