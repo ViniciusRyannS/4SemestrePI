@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sua Loja • Produtos</title>
+  <link rel="stylesheet" href="/styles.css"/>
+
+  <!-- Estilos pontuais: links dos cards + Drawer + helpers -->
+  <style>
+    .card-link{ text-decoration:none; color:inherit; display:block; }
+    .card-link .prod__title{ transition:color .15s ease; }
+    .card-link:hover .prod__title{ color:#1d81b6; }
+    .prod__img a{ display:block; }
+
+    /* Drawer */
+    .drawer-backdrop{position:fixed;inset:0;background:rgba(15,29,38,.45);backdrop-filter:saturate(120%) blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:60}
+    .drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:#fff;border-left:2px solid #2f4a57;box-shadow:-8px 0 24px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s ease;z-index:61;display:flex;flex-direction:column}
+    .drawer.open{transform:translateX(0)}
+    .drawer-backdrop.open{opacity:1;pointer-events:auto}
+    .drawer__head{padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
+    .drawer__title{font-weight:800;color:#0f2d38}
+    .drawer__body{padding:12px 16px;overflow:auto;flex:1}
+    .drawer__foot{padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-wrap:wrap}
+    .btn-outline{background:#fff;color:#165a72;border:2px solid #165a72}
+    .btn-block{width:100%}
+
+    /* mini user chip */
+    .user-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:999px;font-size:.9rem}
+    .user-chip .group{font-size:.75rem;color:#475569;background:#e2e8f0;border-radius:999px;padding:2px 8px}
+    .user-chip button{border:none;background:none;color:#0f2d38;cursor:pointer}
+
+    /* helpers */
+    .hidden{display:none!important;}
+  </style>
+</head>
+<body>
+
+  <!-- TOP STRIP -->
+  <div class="gs-topstrip">
+    <div class="gs-topstrip__content">
+      <span>Adicione <strong>R$ 250,00</strong> ao carrinho para ter <strong>FRETE GRÁTIS</strong></span>
+      <span class="city">São Paulo ▾</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="gs-header">
+    <div class="gs-header__left">
+      <img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'">
+    </div>
+
+    <div class="gs-header__center">
+      <div class="gs-search">
+        <input id="searchBox" type="text" placeholder="Encontre o suplemento ideal para você"/>
+        <button class="gs-search__btn" type="button" onclick="buscar()">🔍</button>
+      </div>
+    </div>
+
+    <div class="gs-header__right">
+      <a id="loginLink" class="gs-link" href="/login.html">👤<span id="loginText">Entrar</span></a>
+      <span id="userChip" class="user-chip hidden">
+        <span id="userName">Usuário</span>
+        <span id="userGroup" class="group">—</span>
+        <button id="btnLogout" title="Sair">Sair</button>
+      </span>
+      <a class="gs-link" href="#">❤<span>Favoritos</span></a>
+      <a class="gs-link" href="#">📞<span>Fale Conosco<br/>Clique aqui</span></a>
+
+      <button class="gs-cart" id="btnCarrinho" title="Carrinho">
+        🛒<span id="cartCount" class="gs-badge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- NAVBAR -->
+  <nav class="gs-nav">
+    <button class="gs-burger">☰</button>
+    <span class="gs-nav__item gs-nav__item--cat">CATEGORIAS ▾</span>
+    <a class="gs-nav__item" href="#">TOP 20</a>
+    <a class="gs-nav__item" href="#">LANÇAMENTOS</a>
+    <a class="gs-nav__item" href="#">WHEY PROTEIN</a>
+    <a class="gs-nav__item" href="#">CREATINA</a>
+    <a class="gs-nav__item" href="#">PRÉ-TREINO</a>
+    <a class="gs-nav__item" href="#">OBJETIVOS</a>
+    <a class="gs-nav__item" href="#">SNACKS</a>
+    <a class="gs-nav__item" href="#">MODA</a>
+    <a class="gs-nav__item" href="#">ACESSÓRIOS</a>
+    <a class="gs-nav__item" href="#">OUTLET</a>
+  </nav>
+
+  <!-- CONTEÚDO COM LATERAL + ÁREA PRINCIPAL -->
+  <main class="page">
+    <!-- SIDEBAR (mock visual) -->
+    <aside class="filters">
+      <div class="view-toggle">
+        <button class="chip chip--active">◼ Grade</button>
+        <button class="chip">☰ Lista</button>
+      </div>
+
+      <div class="filter-block">
+        <div class="filter-title">Sabor</div>
+        <ul class="filter-list">
+          <li><label><input type="checkbox"> Chocolate</label></li>
+          <li><label><input type="checkbox"> Morango</label></li>
+          <li><label><input type="checkbox"> Baunilha</label></li>
+          <li><label><input type="checkbox"> Natural</label></li>
+          <li><label><input type="checkbox"> Banana</label></li>
+          <li><label><input type="checkbox"> Cookies & Cream</label></li>
+          <li><label><input type="checkbox"> Doce de leite</label></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ÁREA PRINCIPAL -->
+    <section class="content">
+      <div id="alert" class="alert hidden"></div>
+
+      <!-- LISTA: toolbar + grid -->
+      <section id="view-lista">
+        <div class="toolbar">
+          <div class="toolbar__right">
+            <!-- só admin vê (controlado em JS) -->
+            <button class="btn admin-only hidden" id="btnNovo">+ Incluir novo produto</button>
+          </div>
+        </div>
+        <div id="grid" class="cards-grid"></div>
+      </section>
+
+      <!-- FORM (admin) -->
+      <section id="view-form" class="hidden">
+        <div class="card">
+          <div class="titulo">Novo produto</div>
+          <form id="formProduto">
+            <label>Nome</label>
+            <input class="input" id="nome" required/>
+            <label>Preço</label>
+            <input class="input" id="preco" type="number" step="0.01" min="0.01" required/>
+            <label>Quantidade em estoque</label>
+            <input class="input" id="qtdEstoque" type="number" min="0" required/>
+            <label>Descrição detalhada</label>
+            <textarea class="input" id="descricaoDetalhada" rows="5" minlength="10" required></textarea>
+            <label>Avaliação (0.5 a 5.0, passos 0.5)</label>
+            <input class="input" id="avaliacao" type="number" step="0.5" min="0.5" max="5.0"/>
+            <div class="mt-12">
+              <button class="btn" type="submit">Salvar</button>
+              <button class="btn btn-secondary" type="button" id="btnCancelar">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <!-- (Sem a antiga seção view-carrinho; carrinho agora é só Drawer) -->
+    </section>
+  </main>
+
+  <!-- Drawer do carrinho (global) -->
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="cartDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer__head">
+      <div class="drawer__title">Seu carrinho</div>
+      <button class="btn-mini btn-danger" id="btnCloseDrawer">Fechar</button>
+    </div>
+    <div class="drawer__body">
+      <div id="cartItems"></div>
+
+      <div class="mt-16">
+        <label>CEP para cálculo de frete</label>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input class="input" id="cep" placeholder="Digite seu CEP (somente números)" style="max-width:220px"/>
+          <button class="btn" type="button" id="btnCalcFrete">Calcular frete</button>
+        </div>
+        <div id="freteOpcoes" class="mt-12"></div>
+      </div>
+
+      <div class="mt-16" id="resumoValores"></div>
+    </div>
+    <div class="drawer__foot">
+      <button class="btn btn-outline btn-block" id="btnContinue">Continuar comprando</button>
+      <button class="btn btn-block" id="btnFinalizar">Finalizar compra</button>
+    </div>
+  </aside>
+
+  <!-- Auth helpers -->
+  <script src="/js/auth.js"></script>
+  <script>
+/* ==================== CONFIG BÁSICA ==================== */
+const API = '/api/produtos';
+const grid = document.getElementById('grid');
+const alertEl = document.getElementById('alert');
+
+const cartDrawer     = document.getElementById('cartDrawer');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
+const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+const btnContinue    = document.getElementById('btnContinue');
+const btnFinalizar   = document.getElementById('btnFinalizar');
+const btnCalcFrete   = document.getElementById('btnCalcFrete');
+
+const cartItemsEl      = document.getElementById('cartItems');
+const resumoValoresEl  = document.getElementById('resumoValores');
+const freteOpcoesEl    = document.getElementById('freteOpcoes');
+
+const btnNovo          = document.getElementById('btnNovo');
+const loginLink        = document.getElementById('loginLink');
+const userChip         = document.getElementById('userChip');
+const userNameEl       = document.getElementById('userName');
+const userGroupEl      = document.getElementById('userGroup');
+const btnLogout        = document.getElementById('btnLogout');
+
+/* ===== helpers visuais ===== */
+function showAlert(msg, type='success'){
+  alertEl.textContent = msg;
+  alertEl.className = `alert ${type==='success' ? 'success':'error'}`;
+  alertEl.classList.remove('hidden');
+}
+function hideAlert(){ alertEl.classList.add('hidden'); }
+
+/* ==== Mostrar/ocultar lista vs form ==== */
+function toggleOnly(idToShow){
+  ['view-lista','view-form'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.classList.toggle('hidden', id !== idToShow);
+  });
+  if (idToShow === 'view-form') window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ======= Auth/UI ======= */
+function syncAdminUI(){
+  const admin = (window.isAdmin && isAdmin());
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.classList.toggle('hidden', !admin);
+  });
+}
+function refreshAuthUI(){
+  const auth = (window.getAuth ? getAuth() : null);
+  const logged = !!auth?.token;
+
+  if(!logged){
+    loginLink.classList.remove('hidden');
+    userChip.classList.add('hidden');
+  }else{
+    loginLink.classList.add('hidden');
+    userChip.classList.remove('hidden');
+    userNameEl.textContent  = auth?.nome || auth?.email || 'Usuário';
+    userGroupEl.textContent = auth?.grupo || '-';
+  }
+  syncAdminUI();
+}
+
+btnLogout.addEventListener('click', () => {
+  if(window.clearAuth) clearAuth();
+  refreshAuthUI();
+  location.reload();
+});
+
+loginLink.addEventListener('click', () => {
+  loginLink.href = '/login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+});
+
+/* Drawer helpers */
+function openDrawer(){
+  cartDrawer.classList.add('open');
+  drawerBackdrop.classList.add('open');
+  cartDrawer.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer(){
+  cartDrawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
+  cartDrawer.setAttribute('aria-hidden', 'true');
+}
+drawerBackdrop.addEventListener('click', closeDrawer);
+btnCloseDrawer.addEventListener('click', closeDrawer);
+btnContinue.addEventListener('click', closeDrawer);
+
+/* Header cart button abre o drawer */
+document.getElementById('btnCarrinho').addEventListener('click', async ()=>{
+  await renderCarrinho();
+  openDrawer();
+});
+
+/* ==================== HELPERS ==================== */
+function normSrc(src){
+  if(!src) return '';
+  let s = String(src).replace(/\\/g,'/');
+  if(!s.startsWith('/')) s = '/' + s;
+  return s + `?v=${Date.now()}`;
+}
+function starsHTML(av){
+  if(!av) return `<span class="stars muted">☆☆☆☆☆</span> <span class="count muted">(0)</span>`;
+  const f = Math.max(0, Math.min(5, Number(av)));
+  const full = '★'.repeat(Math.floor(f));
+  const half = (f % 1) ? '⯪' : '';
+  const empty = '☆'.repeat(5 - Math.ceil(f));
+  return `<span class="stars">${full}${half}${empty}</span> <span class="count muted">(10265)</span>`;
+}
+function bulletsHTML(p){
+  const d = (p.descricaoDetalhada||'').trim();
+  if(!d){
+    return `<li>Alta concentração de proteína</li>
+            <li>Melhor custo x benefício</li>
+            <li>Ajuda na hipertrofia</li>`;
+  }
+  const parts = d.replace(/\n/g,' ').split(/[.!?•\-–]/).map(s=>s.trim()).filter(Boolean).slice(0,3);
+  while(parts.length<3) parts.push('Benefício do produto');
+  return parts.map(t=>`<li>${t}</li>`).join('');
+}
+
+/* ==================== LISTA EM CARDS ==================== */
+async function carregar(){
+  hideAlert();
+  const res = await fetch(API); // público
+  const data = await res.json();
+
+  const admin = (window.isAdmin && isAdmin());
+  grid.innerHTML = data.map(p=>{
+    const src = normSrc(p.imagemPrincipal);
+    return `
+      <article class="prod">
+        <button class="fav" title="Favoritar">♡</button>
+
+        <div class="prod__img">
+          <a class="card-link" href="/product.html?id=${p.id}">
+            ${src ? `<img src="${src}" alt="Imagem de ${p.nome}" onerror="this.style.display='none'">`
+                  : `<div class="thumb thumb-placeholder">sem imagem</div>`}
+          </a>
+        </div>
+
+        <a class="card-link" href="/product.html?id=${p.id}">
+          <h3 class="prod__title">${p.nome}</h3>
+        </a>
+
+        <div class="prod__rating">${starsHTML(p.avaliacao)}</div>
+
+        <ul class="prod__bullets">${bulletsHTML(p)}</ul>
+
+        <div class="prod__price">
+          <div class="price-main">R$ ${Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+            <span class="off">10% OFF</span>
+          </div>
+          <div class="price-sub">ou até 6x sem juros</div>
+        </div>
+
+        <div class="prod__actions">
+          <button class="btn btn-green" onclick="comprarAbrindoDrawer(${p.id})">COMPRAR</button>
+          ${admin ? `<button class="btn btn-secondary btn-sm admin-only" onclick="abrirPainelImagens(${p.id})">Gerenciar imagens</button>` : ``}
+        </div>
+
+        <!-- Painel Admin Imagens -->
+        <div class="img-panel hidden" id="panel-${p.id}">
+          <div class="muted" style="margin-top:8px;">Imagens do produto</div>
+          <div class="img-list" id="imgs-${p.id}"></div>
+          <div class="img-form">
+            <input class="input" id="imgPath-${p.id}" placeholder="Caminho de origem (arquivo local/rede)"/>
+            <label class="chk"><input type="checkbox" id="imgPrincipal-${p.id}"> Principal</label>
+            <button class="btn" onclick="adicionarImagem(${p.id})">Adicionar</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+  syncAdminUI();
+}
+
+/* ==================== BUSCA ==================== */
+function buscar(){
+  const q = (document.getElementById('searchBox').value||'').trim().toLowerCase();
+  if(!q) return carregar();
+  [...grid.children].forEach(card=>{
+    const title = card.querySelector('.prod__title')?.textContent.toLowerCase() || '';
+    card.style.display = title.includes(q) ? '' : 'none';
+  });
+}
+
+/* ==================== ADMIN IMAGENS ==================== */
+function ensureAdminOrLogin(){
+  if(!(window.isAdmin && isAdmin())){
+    location.href = '/login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    return false;
+  }
+  return true;
+}
+function abrirPainelImagens(produtoId){
+  if(!ensureAdminOrLogin()) return;
+  document.getElementById(`panel-${produtoId}`).classList.toggle('hidden');
+  carregarImagens(produtoId);
+}
+async function carregarImagens(produtoId){
+  const res = await fetch(`${API}/${produtoId}/imagens`);
+  if(!res.ok){ showAlert('Erro ao listar imagens', 'error'); return; }
+  const imgs = await res.json();
+  const listEl = document.getElementById(`imgs-${produtoId}`);
+  listEl.innerHTML = imgs.length ? imgs.map(i => `
+    <div class="img-item">
+      <span class="muted">${i.caminhoDestino.split('/').pop()}</span>
+      <span class="tag ${i.principal?'tag-primary':''}">${i.principal?'principal':'secundária'}</span>
+      <button class="btn-mini btn-danger" onclick="removerImagem(${produtoId}, ${i.id})">remover</button>
+    </div>
+  `).join('') : `<div class="muted">Nenhuma imagem.</div>`;
+}
+async function adicionarImagem(produtoId){
+  if(!ensureAdminOrLogin()) return;
+  const caminho = document.getElementById(`imgPath-${produtoId}`).value.trim();
+  const principal = document.getElementById(`imgPrincipal-${produtoId}`).checked;
+  if(!caminho){ showAlert('Informe o caminho de origem da imagem', 'error'); return; }
+  const res = await apiFetch(`${API}/${produtoId}/imagens`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ caminhoOrigem: caminho, principal })
+  });
+  if(!res.ok){ showAlert('Erro ao adicionar imagem', 'error'); return; }
+  showAlert('Imagem adicionada!');
+  document.getElementById(`imgPath-${produtoId}`).value = '';
+  await carregarImagens(produtoId);
+  await carregar();
+}
+async function removerImagem(produtoId, imgId){
+  if(!ensureAdminOrLogin()) return;
+  const res = await apiFetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
+  if(!res.ok){ showAlert('Erro ao remover imagem', 'error'); return; }
+  await carregarImagens(produtoId);
+  await carregar();
+}
+
+/* ==================== FORM PRODUTO (CADASTRO) ==================== */
+btnNovo.addEventListener('click', () => { if(ensureAdminOrLogin()) toggleOnly('view-form'); });
+document.getElementById('btnCancelar').addEventListener('click', () => toggleOnly('view-lista'));
+
+function validaFront(){
+  const nome = document.getElementById('nome').value.trim();
+  const preco = parseFloat(document.getElementById('preco').value);
+  const qtd = parseInt(document.getElementById('qtdEstoque').value,10);
+  const desc = document.getElementById('descricaoDetalhada').value.trim();
+  const avaliacaoStr = document.getElementById('avaliacao').value.trim();
+
+  if(!nome || !desc || isNaN(preco) || isNaN(qtd)) return 'Preencha os campos obrigatórios';
+  if(preco <= 0) return 'Preço deve ser maior que zero';
+  if(desc.length < 10) return 'Descrição deve ter no mínimo 10 caracteres';
+  if(qtd < 0) return 'Quantidade não pode ser negativa';
+  if(avaliacaoStr){
+    const a = parseFloat(avaliacaoStr);
+    if(isNaN(a) || a < 0.5 || a > 5.0 || (a*10)%5 !== 0) return 'Avaliação deve estar entre 0.5 e 5.0 em passos de 0.5';
+  }
+  return null;
+}
+
+const form = document.getElementById('formProduto');
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(!ensureAdminOrLogin()) return;
+
+  const erro = validaFront();
+  if(erro){ showAlert(erro, 'error'); return; }
+
+  const payload = {
+    nome: document.getElementById('nome').value.trim(),
+    preco: parseFloat(document.getElementById('preco').value),
+    qtdEstoque: parseInt(document.getElementById('qtdEstoque').value,10),
+    descricaoDetalhada: document.getElementById('descricaoDetalhada').value.trim(),
+    avaliacao: document.getElementById('avaliacao').value.trim() ? parseFloat(document.getElementById('avaliacao').value) : null
+  };
+
+  const res = await apiFetch(API, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok){
+    const pd = await res.json().catch(()=>({detail:'Erro ao salvar'}));
+    showAlert(pd.detail || 'Erro ao salvar', 'error');
+    return;
+  }
+  form.reset();
+  toggleOnly('view-lista');
+  showAlert('Produto cadastrado com sucesso!');
+  carregar();
+});
+
+/* ==================== CARRINHO / FRETE / FINALIZAÇÃO ==================== */
+async function addToCart(produtoId, quantidade=1){
+  const res = await fetch(`/api/carrinho/itens?produtoId=${produtoId}&quantidade=${quantidade}`, { method:'POST' });
+  return res.ok;
+}
+async function comprarAbrindoDrawer(produtoId){
+  const ok = await addToCart(produtoId, 1);
+  if(!ok){ showAlert('Não foi possível adicionar ao carrinho', 'error'); return; }
+  await renderCarrinho();
+  openDrawer();
+}
+async function renderCarrinho(){
+  const res = await fetch('/api/carrinho');
+  const c = await res.json();
+
+  const count = (c.itens || []).reduce((acc, i) => acc + (i.quantidade||0), 0);
+  document.getElementById('cartCount').textContent = count;
+
+  if(!c.itens || !c.itens.length){
+    cartItemsEl.innerHTML = `<p class="muted">Seu carrinho está vazio.</p>`;
+  }else{
+    cartItemsEl.innerHTML = `
+      <table class="tabela">
+        <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th><th></th></tr></thead>
+        <tbody>
+          ${c.itens.map(i => `
+            <tr>
+              <td>${i.nome}</td>
+              <td>R$ ${Number(i.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+              <td>
+                <button class="btn-mini" onclick="alterarQtd(${i.produtoId}, ${i.quantidade-1})">–</button>
+                <span class="qtd">${i.quantidade}</span>
+                <button class="btn-mini" onclick="alterarQtd(${i.produtoId}, ${i.quantidade+1})">+</button>
+              </td>
+              <td>R$ ${Number(i.preco * i.quantidade).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+              <td><button class="btn-mini btn-danger" onclick="removerItem(${i.produtoId})">remover</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  const freteStr = c.modalidadeFrete ? `Frete (${c.modalidadeFrete})` : `Frete`;
+  resumoValoresEl.innerHTML = `
+    <div class="muted"><span class="label">Subtotal:</span> R$ ${Number(c.subtotal ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+    <div class="muted"><span class="label">${freteStr}:</span> R$ ${Number(c.frete ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+    <div class="muted"><span class="label">Total:</span> <strong>R$ ${Number(c.total ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+  `;
+}
+async function alterarQtd(produtoId, novaQtd){
+  const res = await fetch(`/api/carrinho/itens/${produtoId}?quantidade=${novaQtd}`, { method:'PUT' });
+  if(!res.ok){ showAlert('Erro ao atualizar quantidade', 'error'); return; }
+  renderCarrinho();
+}
+async function removerItem(produtoId){
+  const res = await fetch(`/api/carrinho/itens/${produtoId}`, { method:'DELETE' });
+  if(!res.ok){ showAlert('Erro ao remover item', 'error'); return; }
+  renderCarrinho();
+}
+btnCalcFrete.addEventListener('click', calcularFrete);
+async function calcularFrete(){
+  const cep = (document.getElementById('cep').value || '').replace(/\D/g,'');
+  if(cep.length !== 8){ showAlert('CEP deve ter 8 dígitos', 'error'); return; }
+  const res = await fetch(`/api/frete/opcoes?cep=${cep}`, { method:'POST' });
+  if(!res.ok){ showAlert('Não foi possível calcular frete', 'error'); return; }
+  const opcoes = await res.json();
+  freteOpcoesEl.innerHTML = `
+    <div class="muted">Escolha uma modalidade:</div>
+    ${opcoes.map(o => `
+      <label class="radio">
+        <input type="radio" name="freteOpt" value="${o.nome}|${o.valor}">
+        ${o.nome} — R$ ${Number(o.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})} (${o.prazo})
+      </label>
+    `).join('')}
+    <div class="mt-12"><button class="btn" onclick="aplicarFreteEscolhido()">Aplicar frete</button></div>
+  `;
+}
+async function aplicarFreteEscolhido(){
+  const checked = document.querySelector('input[name="freteOpt"]:checked');
+  if(!checked){ showAlert('Selecione uma modalidade de frete', 'error'); return; }
+  const [modalidade, valorStr] = checked.value.split('|');
+  const res = await fetch(`/api/carrinho/frete?modalidade=${encodeURIComponent(modalidade)}&valor=${valorStr}`, { method:'POST' });
+  if(!res.ok){ showAlert('Não foi possível aplicar o frete', 'error'); return; }
+  renderCarrinho();
+}
+btnFinalizar.addEventListener('click', async ()=>{
+  const res = await fetch('/api/carrinho/finalizar', { method:'POST' });
+  if(!res.ok){
+    const e = await res.json().catch(()=>({detail:'Não foi possível finalizar'}));
+    showAlert(e.detail || 'Não foi possível finalizar', 'error');
+    return;
+  }
+  showAlert('Compra finalizada com sucesso!');
+  closeDrawer();
+});
+
+/* Init */
+refreshAuthUI();
+carregar();
+renderCarrinho(); // inicializa badge
+  </script>
+</body>
+</html>
