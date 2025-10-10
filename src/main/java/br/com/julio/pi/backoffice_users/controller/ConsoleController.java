@@ -58,9 +58,12 @@ public class ConsoleController {
                 System.out.println("2) Incluir usuário");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 System.out.println("3) Alterar usuário");
                 System.out.println("4) Alterar senha de um usuário");
                 System.out.println("5) Ativar/Desativar usuário");
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -82,6 +85,7 @@ public class ConsoleController {
                 }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 case 3 -> {
                     if (!isAdmin(logado)) { deny(); break; }
                     alterarUsuario();
@@ -98,6 +102,8 @@ public class ConsoleController {
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
                 case 0 -> {
                     System.out.println("Saindo...");
                     return; 
@@ -108,6 +114,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     private void listarUsuarios() {
@@ -158,6 +165,8 @@ public class ConsoleController {
             default -> { /* volta */ }
         }
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
     private void listarUsuarios(Usuario logado) {
@@ -254,6 +263,9 @@ public class ConsoleController {
         System.out.println("Grupo: " + (u.getGrupo() == Grupo.ADMINISTRADOR ? "Administrador" : "Estoquista"));
         printSeparator();
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
@@ -279,10 +291,13 @@ public class ConsoleController {
         dto.setEmail(in.nextLine().trim());
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!emailValido(dto.getEmail())) {
             System.out.println(">> E-mail inválido.");
             return;
         }
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -303,8 +318,11 @@ public class ConsoleController {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!confirmar("Confirmar inclusão?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -317,6 +335,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     private void alterarUsuario() {
@@ -340,6 +359,8 @@ public class ConsoleController {
 =======
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private boolean alterarUsuario(long id) {
         System.out.println();
         System.out.println("--- Alterar Usuário ---");
@@ -351,6 +372,9 @@ public class ConsoleController {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
@@ -365,7 +389,11 @@ public class ConsoleController {
             System.out.println(">> CPF inválido.");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             return;
+=======
+            return false;
+>>>>>>> 1931bad (corrigido edicao)
 =======
             return false;
 >>>>>>> 1931bad (corrigido edicao)
@@ -379,6 +407,7 @@ public class ConsoleController {
         int g = lerIntSeguro();
         dto.setGrupo(g == 1 ? Grupo.ADMINISTRADOR : Grupo.ESTOQUISTA);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         if (!confirmar("Confirmar alterações?")) return;
@@ -404,6 +433,8 @@ public class ConsoleController {
 =======
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
         try {
             Usuario upd = usuarioService.update(id, dto);
             System.out.println(">> Usuário atualizado: " + upd.getNome());
@@ -419,6 +450,9 @@ public class ConsoleController {
         System.out.println("--- Alterar Senha ---");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
@@ -429,8 +463,11 @@ public class ConsoleController {
         }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         Usuario u = opt.get();
         printUsuario(u);
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -449,8 +486,11 @@ public class ConsoleController {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (!confirmar("Confirmar alteração de senha?")) return;
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -463,6 +503,7 @@ public class ConsoleController {
         }
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     private void toggleStatus() {
@@ -505,6 +546,8 @@ public class ConsoleController {
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
+=======
+>>>>>>> 1931bad (corrigido edicao)
     private boolean isAdmin(Usuario u) {
         return u.getGrupo() == Grupo.ADMINISTRADOR;
     }
@@ -513,6 +556,7 @@ public class ConsoleController {
         System.out.println("Acesso negado: apenas administradores.");
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     private boolean emailValido(String e) {
@@ -532,6 +576,8 @@ public class ConsoleController {
         );
     }
 
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 =======
@@ -559,7 +605,10 @@ public class ConsoleController {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)
 
@@ -584,6 +633,9 @@ public class ConsoleController {
                 digits.substring(9));
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1931bad (corrigido edicao)
+=======
 >>>>>>> 1931bad (corrigido edicao)
 =======
 >>>>>>> 1931bad (corrigido edicao)

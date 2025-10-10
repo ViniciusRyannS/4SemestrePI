@@ -6,7 +6,11 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.5</version>
+<<<<<<< HEAD
 		<relativePath/> 
+=======
+		<relativePath/> <!-- lookup parent from repository -->
+>>>>>>> 1931bad (corrigido edicao)
 	</parent>
 	<groupId>br.com.julio.pi</groupId>
 	<artifactId>backoffice-users</artifactId>

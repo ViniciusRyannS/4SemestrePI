@@ -27,7 +27,11 @@ public class DataSeeder {
                 u.setEmail("admin@pi.com");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 String hash = senhaService.gerarHash("admin123"); // sempre hash!
+=======
+                String hash = senhaService.gerarHash("admin123");
+>>>>>>> 1931bad (corrigido edicao)
 =======
                 String hash = senhaService.gerarHash("admin123");
 >>>>>>> 1931bad (corrigido edicao)

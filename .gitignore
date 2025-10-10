@@ -33,6 +33,7 @@ build/
 .vscode/
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 ### Banco de Dados H2 ###
@@ -47,3 +48,5 @@ data/
 *.log
 *.zip
 >>>>>>> 3861d32 (organizando as ultimas alterações para a Sprint 2)
+=======
+>>>>>>> 1931bad (corrigido edicao)
