@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Entrar • Minha Conta</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:900px;margin:24px auto;padding:0 12px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
+    label{font-weight:600;margin-top:8px;display:block}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border:1px solid #cbd5e1;border-radius:999px;cursor:pointer}
+    .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+    .hidden{display:none}
+    .alert{margin:10px 0;padding:10px;border-radius:8px}
+    .alert.success{background:#e6ffed;color:#065f46}
+    .alert.error{background:#ffe8e8;color:#991b1b}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .btn{padding:10px 14px;border:0;border-radius:8px;background:#0f172a;color:#fff;cursor:pointer}
+    .btn.secondary{background:#e5e7eb;color:#0f172a}
+    a.small{font-size:.9rem}
+  </style>
+</head>
+<body>
+  <header class="gs-header">
+    <div class="gs-header__left">
+      <a href="/"><img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'"></a>
+    </div>
+    <div class="gs-header__center"></div>
+    <div class="gs-header__right">
+      <a class="gs-link" href="/">🏠<span>Home</span></a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <h2>Minha conta</h2>
+
+    <div id="msg" class="alert hidden"></div>
+
+    <div class="tabs">
+      <button id="tabLogin" class="tab active" type="button">Login</button>
+      <button id="tabReg"   class="tab" type="button">Cadastro</button>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="viewLogin" class="card">
+      <form id="formLogin" autocomplete="on">
+        <label>E-mail</label>
+        <input id="loginEmail" type="email" required autocomplete="email"/>
+
+        <label>Senha</label>
+        <input id="loginSenha" type="password" required autocomplete="current-password"/>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn" type="submit">Entrar</button>
+          <a id="lnkForgot" href="#" class="small">Esqueci minha senha</a>
+        </div>
+      </form>
+
+      <!-- “Esqueci minha senha” (usa endpoint PUT /me/senha com senha atual) -->
+      <div id="forgotBox" class="card hidden" style="margin-top:12px">
+        <h4>Trocar senha</h4>
+        <form id="formForgot" autocomplete="off">
+          <div class="row">
+            <div>
+              <label>Senha atual</label>
+              <input id="fgSenhaAtual" type="password" required/>
+            </div>
+            <div>
+              <label>Nova senha</label>
+              <input id="fgNovaSenha" type="password" required/>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <label>Confirmar nova senha</label>
+            <input id="fgConfSenha" type="password" required/>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn" type="submit">Alterar senha</button>
+            <button class="btn secondary" type="button" onclick="document.getElementById('forgotBox').classList.add('hidden')">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- CADASTRO -->
+    <section id="viewReg" class="card hidden">
+      <form id="formRegister" autocomplete="off">
+        <div class="row">
+          <div>
+            <label>Nome completo</label>
+            <input id="regNome" required/>
+          </div>
+          <div>
+            <label>E-mail</label>
+            <input id="regEmail" type="email" required/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>CPF</label>
+            <input id="regCpf" required placeholder="000.000.000-00 ou só números"/>
+          </div>
+          <div>
+            <label>Data de nascimento</label>
+            <input id="regNasc" type="date"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Gênero</label>
+            <select id="regGenero">
+              <option value="">—</option>
+              <option value="FEMININO">Feminino</option>
+              <option value="MASCULINO">Masculino</option>
+              <option value="OUTRO">Outro</option>
+              <option value="NAO_INFORMAR">Prefiro não informar</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Senha</label>
+            <input id="regSenha" type="password" required minlength="6"/>
+          </div>
+          <div>
+            <label>Confirmar senha</label>
+            <input id="regConfSenha" type="password" required minlength="6"/>
+          </div>
+        </div>
+
+        <h4 style="margin-top:12px">Endereço de faturamento</h4>
+        <div class="row-3">
+          <div>
+            <label>CEP</label>
+            <input id="fatCep" placeholder="00000-000" required/>
+          </div>
+          <div>
+            <label>Número</label>
+            <input id="fatNumero" required/>
+          </div>
+          <div>
+            <label>Complemento</label>
+            <input id="fatComp"/>
+          </div>
+        </div>
+
+        <h4 style="margin-top:12px">Endereço de entrega (opcional; copia o FAT se vazio)</h4>
+        <div class="row-3">
+          <div>
+            <label>CEP</label>
+            <input id="entCep" placeholder="00000-000"/>
+          </div>
+          <div>
+            <label>Número</label>
+            <input id="entNumero"/>
+          </div>
+          <div>
+            <label>Complemento</label>
+            <input id="entComp"/>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <button class="btn" type="submit">Cadastrar</button>
+          <a class="small" href="#" onclick="document.getElementById('tabLogin').click();return false;">Já tenho conta</a>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+    // Liga os handlers e impede 'refresh' nos submits
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.__initClienteLoginPage) window.__initClienteLoginPage();
+    });
+  </script>
+</body>
+</html>

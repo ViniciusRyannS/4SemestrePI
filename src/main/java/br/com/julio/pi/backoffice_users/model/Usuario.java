@@ -26,7 +26,7 @@ public class Usuario {
     private String nome;
 
     @NotBlank
-    @Column(length = 14) 
+    @Column(length = 14)
     private String cpf;
 
     @Email
@@ -59,4 +59,25 @@ public class Usuario {
     public void setGrupo(Grupo grupo) { this.grupo = grupo; }
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
+
+    /* ===================== ADIÇÕES PARA AUTENTICAÇÃO ===================== */
+
+    /**
+     * Exposto para o AuthController/JWT como "perfil".
+     * Retorna algo como "ADMIN" ou "ESTOQUISTA" baseado no enum Grupo.
+     */
+    public String getPerfil() {
+        return (grupo != null) ? grupo.name() : null;
+    }
+
+    /** Atalho para verificar se o usuário está ativo. */
+    public boolean isAtivo() {
+        return status != null && status.name().equalsIgnoreCase("ATIVO");
+    }
+
+    /** Conveniência para checar papel/perfil em regras pontuais. */
+    public boolean hasPerfil(String perfil) {
+        if (perfil == null || grupo == null) return false;
+        return grupo.name().equalsIgnoreCase(perfil);
+    }
 }
