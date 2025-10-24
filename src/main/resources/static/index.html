@@ -6,14 +6,12 @@
   <title>Sua Loja • Produtos</title>
   <link rel="stylesheet" href="/styles.css"/>
 
-  <!-- Estilos pontuais: links dos cards + Drawer -->
   <style>
     .card-link{ text-decoration:none; color:inherit; display:block; }
     .card-link .prod__title{ transition:color .15s ease; }
     .card-link:hover .prod__title{ color:#1d81b6; }
     .prod__img a{ display:block; }
 
-    /* Drawer */
     .drawer-backdrop{position:fixed;inset:0;background:rgba(15,29,38,.45);backdrop-filter:saturate(120%) blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:60}
     .drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:#fff;border-left:2px solid #2f4a57;box-shadow:-8px 0 24px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s ease;z-index:61;display:flex;flex-direction:column}
     .drawer.open{transform:translateX(0)}
@@ -24,6 +22,12 @@
     .drawer__foot{padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-wrap:wrap}
     .btn-outline{background:#fff;color:#165a72;border:2px solid #165a72}
     .btn-block{width:100%}
+
+    .user-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:999px;font-size:.9rem}
+    .user-chip .group{font-size:.75rem;color:#475569;background:#e2e8f0;border-radius:999px;padding:2px 8px}
+    .user-chip button{border:none;background:none;color:#0f2d38;cursor:pointer}
+
+    .hidden{display:none!important;}
   </style>
 </head>
 <body>
@@ -50,7 +54,18 @@
     </div>
 
     <div class="gs-header__right">
-      <a class="gs-link" href="#">👤<span>Cadastre-se<br/>ou faça login</span></a>
+      <!-- ESTE link troca dinamicamente: Entrar -> Perfil -->
+      <a id="loginLink" class="gs-link" href="/cliente-login.html">
+        <span>👤</span><span id="loginText">Entrar</span>
+      </a>
+
+      <!-- chip fica mais para admin/estoquista; cliente usa o link "Perfil" -->
+      <span id="userChip" class="user-chip hidden">
+        <span id="userName">Usuário</span>
+        <span id="userGroup" class="group">—</span>
+        <button id="btnLogout" title="Sair">Sair</button>
+      </span>
+
       <a class="gs-link" href="#">❤<span>Favoritos</span></a>
       <a class="gs-link" href="#">📞<span>Fale Conosco<br/>Clique aqui</span></a>
 
@@ -107,7 +122,8 @@
       <section id="view-lista">
         <div class="toolbar">
           <div class="toolbar__right">
-            <button class="btn" id="btnNovo">+ Incluir novo produto</button>
+            <!-- só admin vê (controlado em JS) -->
+            <button class="btn admin-only hidden" id="btnNovo">+ Incluir novo produto</button>
           </div>
         </div>
         <div id="grid" class="cards-grid"></div>
@@ -135,7 +151,6 @@
           </form>
         </div>
       </section>
-      <!-- (Sem a antiga seção view-carrinho; carrinho agora é só Drawer) -->
     </section>
   </main>
 
@@ -166,7 +181,11 @@
     </div>
   </aside>
 
-<script>
+  <!-- Auth helpers -->
+  <script src="/js/auth.js"></script>         <!-- (admin/estoquista) -->
+  <script src="/js/cliente-auth.js"></script> <!-- [CLIENTE] auth do cliente -->
+
+  <script>
 /* ==================== CONFIG BÁSICA ==================== */
 const API = '/api/produtos';
 const grid = document.getElementById('grid');
@@ -183,35 +202,115 @@ const cartItemsEl      = document.getElementById('cartItems');
 const resumoValoresEl  = document.getElementById('resumoValores');
 const freteOpcoesEl    = document.getElementById('freteOpcoes');
 
+const btnNovo          = document.getElementById('btnNovo');
+const loginLink        = document.getElementById('loginLink');
+const loginText        = document.getElementById('loginText');
+const userChip         = document.getElementById('userChip');
+const userNameEl       = document.getElementById('userName');
+const userGroupEl      = document.getElementById('userGroup');
+const btnLogout        = document.getElementById('btnLogout');
+
 /* ===== helpers visuais ===== */
 function showAlert(msg, type='success'){
+  if(!alertEl) return;
   alertEl.textContent = msg;
   alertEl.className = `alert ${type==='success' ? 'success':'error'}`;
   alertEl.classList.remove('hidden');
 }
-function hideAlert(){ alertEl.classList.add('hidden'); }
+function hideAlert(){ if(alertEl) alertEl.classList.add('hidden'); }
 
-/* ==== Mostrar/ocultar lista vs form (drawer é independente) ==== */
-function toggleOnly(idToShow){
-  ['view-lista','view-form'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.classList.toggle('hidden', id !== idToShow);
+/* ==================== UTIL: detectar auth do cliente de forma robusta ==================== */
+function getClienteAuthSafe(){
+  try{
+    if (window.ClienteAuth && typeof ClienteAuth.getAuth === 'function') {
+      const a = ClienteAuth.getAuth();
+      if (a && a.token) return a;
+    }
+    if (window.ClienteAuth && ClienteAuth.auth && ClienteAuth.auth.token) {
+      return ClienteAuth.auth;
+    }
+    const keys = Object.keys(localStorage);
+    for(const k of keys){
+      const low = k.toLowerCase();
+      if (low.includes('cliente') && (low.includes('auth') || low.includes('token'))) {
+        try{
+          const v = JSON.parse(localStorage.getItem(k));
+          if (v && v.token) return v;
+        }catch(e){}
+      }
+    }
+    for (const k of ['clienteAuth','cliente-auth','CLIENTE_AUTH','auth_cliente']) {
+      const raw = localStorage.getItem(k);
+      if(raw){
+        try{
+          const v = JSON.parse(raw);
+          if (v && v.token) return v;
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+/* ======= Auth/UI ======= */
+function refreshAuthUI(){
+  const cAuth   = getClienteAuthSafe();
+  const cLogged = !!cAuth?.token;
+
+  const aAuth   = (window.getAuth ? getAuth() : null); // admin/estoquista
+  const aLogged = !!aAuth?.token;
+
+  if (cLogged){
+    // “Entrar” vira “Perfil”
+    loginText.textContent = 'Perfil';
+    loginLink.href = '/cliente-perfil.html';
+    loginLink.classList.remove('hidden');
+
+    // Chip fica para admin; cliente não precisa dele na home
+    userChip.classList.add('hidden');
+  } else {
+    // não logado: “Entrar” vai para cliente-login com returnUrl
+    const ret = encodeURIComponent(location.pathname + location.search);
+    loginText.textContent = 'Entrar';
+    loginLink.href = '/cliente-login.html?returnUrl=' + ret;
+    loginLink.classList.remove('hidden');
+
+    // chip só aparece se admin logado
+    userChip.classList.toggle('hidden', !aLogged);
+  }
+
+  // Preenche chip se admin logado
+  if (aLogged){
+    userNameEl.textContent  = aAuth?.nome || 'Usuário';
+    userGroupEl.textContent = aAuth?.grupo || '-';
+  }
+
+  // admin-only
+  const admin = (window.isAdmin && typeof isAdmin === 'function' && isAdmin());
+  document.querySelectorAll('.admin-only').forEach(el=> el.classList.toggle('hidden', !admin));
+}
+
+// garante que ao voltar do login (bfcache) a UI atualize
+window.addEventListener('pageshow', (e)=>{
+  refreshAuthUI();
+});
+
+// também atualiza se outra aba logar/deslogar
+window.addEventListener('storage', ()=> refreshAuthUI());
+
+/* logout geral (limpa cliente e admin, caso existam) */
+if(btnLogout){
+  btnLogout.addEventListener('click', () => {
+    try{ if(window.ClienteAuth && typeof ClienteAuth.logout === 'function') ClienteAuth.logout(); }catch(e){}
+    try{ if(window.clearAuth) clearAuth(); }catch(e){}
+    refreshAuthUI();
+    location.reload();
   });
-  if (idToShow === 'view-form') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* Drawer helpers */
-function openDrawer(){
-  cartDrawer.classList.add('open');
-  drawerBackdrop.classList.add('open');
-  cartDrawer.setAttribute('aria-hidden', 'false');
-}
-function closeDrawer(){
-  cartDrawer.classList.remove('open');
-  drawerBackdrop.classList.remove('open');
-  cartDrawer.setAttribute('aria-hidden', 'true');
-}
+function openDrawer(){ cartDrawer.classList.add('open'); drawerBackdrop.classList.add('open'); cartDrawer.setAttribute('aria-hidden','false'); }
+function closeDrawer(){ cartDrawer.classList.remove('open'); drawerBackdrop.classList.remove('open'); cartDrawer.setAttribute('aria-hidden','true'); }
 drawerBackdrop.addEventListener('click', closeDrawer);
 btnCloseDrawer.addEventListener('click', closeDrawer);
 btnContinue.addEventListener('click', closeDrawer);
@@ -227,7 +326,7 @@ function normSrc(src){
   if(!src) return '';
   let s = String(src).replace(/\\/g,'/');
   if(!s.startsWith('/')) s = '/' + s;
-  return s + `?v=${Date.now()}`; // leve cache-buster
+  return s + `?v=${Date.now()}`;
 }
 function starsHTML(av){
   if(!av) return `<span class="stars muted">☆☆☆☆☆</span> <span class="count muted">(0)</span>`;
@@ -240,10 +339,9 @@ function starsHTML(av){
 function bulletsHTML(p){
   const d = (p.descricaoDetalhada||'').trim();
   if(!d){
-    return `
-      <li>Alta concentração de proteína</li>
-      <li>Melhor custo x benefício</li>
-      <li>Ajuda na hipertrofia</li>`;
+    return `<li>Alta concentração de proteína</li>
+            <li>Melhor custo x benefício</li>
+            <li>Ajuda na hipertrofia</li>`;
   }
   const parts = d.replace(/\n/g,' ').split(/[.!?•\-–]/).map(s=>s.trim()).filter(Boolean).slice(0,3);
   while(parts.length<3) parts.push('Benefício do produto');
@@ -253,9 +351,10 @@ function bulletsHTML(p){
 /* ==================== LISTA EM CARDS ==================== */
 async function carregar(){
   hideAlert();
-  const res = await fetch(API);
+  const res = await fetch(API); // público
   const data = await res.json();
 
+  const admin = (window.isAdmin && typeof isAdmin === 'function' && isAdmin());
   grid.innerHTML = data.map(p=>{
     const src = normSrc(p.imagemPrincipal);
     return `
@@ -273,13 +372,9 @@ async function carregar(){
           <h3 class="prod__title">${p.nome}</h3>
         </a>
 
-        <div class="prod__rating">
-          ${starsHTML(p.avaliacao)}
-        </div>
+        <div class="prod__rating">${starsHTML(p.avaliacao)}</div>
 
-        <ul class="prod__bullets">
-          ${bulletsHTML(p)}
-        </ul>
+        <ul class="prod__bullets">${bulletsHTML(p)}</ul>
 
         <div class="prod__price">
           <div class="price-main">R$ ${Number(p.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}
@@ -290,7 +385,7 @@ async function carregar(){
 
         <div class="prod__actions">
           <button class="btn btn-green" onclick="comprarAbrindoDrawer(${p.id})">COMPRAR</button>
-          <button class="btn btn-secondary btn-sm" onclick="abrirPainelImagens(${p.id})">Gerenciar imagens</button>
+          ${admin ? `<button class="btn btn-secondary btn-sm admin-only" onclick="abrirPainelImagens(${p.id})">Gerenciar imagens</button>` : ``}
         </div>
 
         <!-- Painel Admin Imagens -->
@@ -319,12 +414,21 @@ function buscar(){
 }
 
 /* ==================== ADMIN IMAGENS ==================== */
+function ensureAdminOrLogin(){
+  if(!(window.isAdmin && typeof isAdmin === 'function' && isAdmin())){
+    location.href = '/login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    return false;
+  }
+  return true;
+}
 function abrirPainelImagens(produtoId){
+  if(!ensureAdminOrLogin()) return;
   document.getElementById(`panel-${produtoId}`).classList.toggle('hidden');
   carregarImagens(produtoId);
 }
 async function carregarImagens(produtoId){
   const res = await fetch(`${API}/${produtoId}/imagens`);
+  if(!res.ok){ showAlert('Erro ao listar imagens', 'error'); return; }
   const imgs = await res.json();
   const listEl = document.getElementById(`imgs-${produtoId}`);
   listEl.innerHTML = imgs.length ? imgs.map(i => `
@@ -336,10 +440,11 @@ async function carregarImagens(produtoId){
   `).join('') : `<div class="muted">Nenhuma imagem.</div>`;
 }
 async function adicionarImagem(produtoId){
+  if(!ensureAdminOrLogin()) return;
   const caminho = document.getElementById(`imgPath-${produtoId}`).value.trim();
   const principal = document.getElementById(`imgPrincipal-${produtoId}`).checked;
   if(!caminho){ showAlert('Informe o caminho de origem da imagem', 'error'); return; }
-  const res = await fetch(`${API}/${produtoId}/imagens`, {
+  const res = await apiFetch(`${API}/${produtoId}/imagens`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ caminhoOrigem: caminho, principal })
   });
@@ -347,62 +452,15 @@ async function adicionarImagem(produtoId){
   showAlert('Imagem adicionada!');
   document.getElementById(`imgPath-${produtoId}`).value = '';
   await carregarImagens(produtoId);
-  await carregar(); // atualiza thumbnail no card
+  await carregar();
 }
 async function removerImagem(produtoId, imgId){
-  const res = await fetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
+  if(!ensureAdminOrLogin()) return;
+  const res = await apiFetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
   if(!res.ok){ showAlert('Erro ao remover imagem', 'error'); return; }
   await carregarImagens(produtoId);
   await carregar();
 }
-
-/* ==================== FORM PRODUTO (CADASTRO) ==================== */
-document.getElementById('btnNovo').addEventListener('click', () => toggleOnly('view-form'));
-document.getElementById('btnCancelar').addEventListener('click', () => toggleOnly('view-lista'));
-
-function validaFront(){
-  const nome = document.getElementById('nome').value.trim();
-  const preco = parseFloat(document.getElementById('preco').value);
-  const qtd = parseInt(document.getElementById('qtdEstoque').value,10);
-  const desc = document.getElementById('descricaoDetalhada').value.trim();
-  const avaliacaoStr = document.getElementById('avaliacao').value.trim();
-
-  if(!nome || !desc || isNaN(preco) || isNaN(qtd)) return 'Preencha os campos obrigatórios';
-  if(preco <= 0) return 'Preço deve ser maior que zero';
-  if(desc.length < 10) return 'Descrição deve ter no mínimo 10 caracteres';
-  if(qtd < 0) return 'Quantidade não pode ser negativa';
-  if(avaliacaoStr){
-    const a = parseFloat(avaliacaoStr);
-    if(isNaN(a) || a < 0.5 || a > 5.0 || (a*10)%5 !== 0) return 'Avaliação deve estar entre 0.5 e 5.0 em passos de 0.5';
-  }
-  return null;
-}
-
-const form = document.getElementById('formProduto');
-form.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const erro = validaFront();
-  if(erro){ showAlert(erro, 'error'); return; }
-
-  const payload = {
-    nome: document.getElementById('nome').value.trim(),
-    preco: parseFloat(document.getElementById('preco').value),
-    qtdEstoque: parseInt(document.getElementById('qtdEstoque').value,10),
-    descricaoDetalhada: document.getElementById('descricaoDetalhada').value.trim(),
-    avaliacao: document.getElementById('avaliacao').value.trim() ? parseFloat(document.getElementById('avaliacao').value) : null
-  };
-
-  const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-  if(!res.ok){
-    const pd = await res.json().catch(()=>({detail:'Erro ao salvar'}));
-    showAlert(pd.detail || 'Erro ao salvar', 'error');
-    return;
-  }
-  form.reset();
-  toggleOnly('view-lista');
-  showAlert('Produto cadastrado com sucesso!');
-  carregar();
-});
 
 /* ==================== CARRINHO / FRETE / FINALIZAÇÃO ==================== */
 async function addToCart(produtoId, quantidade=1){
@@ -419,7 +477,6 @@ async function renderCarrinho(){
   const res = await fetch('/api/carrinho');
   const c = await res.json();
 
-  // badge
   const count = (c.itens || []).reduce((acc, i) => acc + (i.quantidade||0), 0);
   document.getElementById('cartCount').textContent = count;
 
@@ -502,8 +559,9 @@ btnFinalizar.addEventListener('click', async ()=>{
 });
 
 /* Init */
+refreshAuthUI();
 carregar();
 renderCarrinho(); // inicializa badge
-</script>
+  </script>
 </body>
 </html>

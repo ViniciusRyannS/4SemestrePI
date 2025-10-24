@@ -13,7 +13,7 @@
     @media (max-width: 960px){ .pd-grid{grid-template-columns:1fr} }
     /* Galeria */
     .gallery{border:2px solid #2f4a57;border-radius:12px;padding:12px;background:#fff}
-    .gallery-main{width:100%;aspect-ratio:4/3;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc}
+    .gallery-main{width:100%;aspect-ratio:4/3;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc;position:relative}
     .gallery-main img{width:100%;height:100%;object-fit:cover;display:block}
     .gallery-thumbs{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
     .thumb-item{width:72px;height:72px;border:2px solid #e5e7eb;border-radius:8px;overflow:hidden;cursor:pointer;background:#fff}
@@ -36,7 +36,7 @@
     .tag-primary{background:#165a72;color:#fff}
     .img-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .chk{display:flex;align-items:center;gap:6px;color:#0f2d38}
-    /* Drawer Carrinho */
+    /* Drawer (globais) */
     .drawer-backdrop{position:fixed;inset:0;background:rgba(15,29,38,.45);backdrop-filter:saturate(120%) blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:60}
     .drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:#fff;border-left:2px solid #2f4a57;box-shadow:-8px 0 24px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s ease;z-index:61;display:flex;flex-direction:column}
     .drawer.open{transform:translateX(0)}
@@ -47,11 +47,14 @@
     .drawer__foot{padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-wrap:wrap}
     .btn-outline{background:#fff;color:#165a72;border:2px solid #165a72}
     .btn-block{width:100%}
+
+    /* Admin UI: escondido por padrão, JS mostra se for ADMINISTRADOR */
+    .admin-only{display:none}
   </style>
 </head>
 <body>
 
-  <!-- ====== CABEÇALHO IGUAL AO DA HOME ====== -->
+  <!-- TOP -->
   <div class="gs-topstrip">
     <div class="gs-topstrip__content">
       <span>Adicione <strong>R$ 250,00</strong> ao carrinho para ter <strong>FRETE GRÁTIS</strong></span>
@@ -59,6 +62,7 @@
     </div>
   </div>
 
+  <!-- HEADER -->
   <header class="gs-header">
     <div class="gs-header__left">
       <a href="/"><img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'"></a>
@@ -72,7 +76,7 @@
     </div>
 
     <div class="gs-header__right">
-      <a class="gs-link" href="#">👤<span>Cadastre-se<br/>ou faça login</span></a>
+      <a class="gs-link" href="/login.html">👤<span>Entrar</span></a>
       <a class="gs-link" href="#">❤<span>Favoritos</span></a>
       <a class="gs-link" href="#">📞<span>Fale Conosco<br/>Clique aqui</span></a>
 
@@ -96,7 +100,6 @@
     <a class="gs-nav__item" href="#">ACESSÓRIOS</a>
     <a class="gs-nav__item" href="#">OUTLET</a>
   </nav>
-  <!-- ====== /cabeçalho ====== -->
 
   <main class="pd-container">
     <a href="/" class="btn btn-secondary" style="margin:8px 0;display:inline-block">← Voltar</a>
@@ -104,7 +107,7 @@
     <div class="pd-grid">
       <!-- GALERIA -->
       <section>
-        <div class="gallery">
+        <div id="gallery" class="gallery">
           <div id="gMain" class="gallery-main">
             <div class="thumb thumb-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#6b7280">
               sem imagem
@@ -113,8 +116,13 @@
           <div id="gThumbs" class="gallery-thumbs"></div>
         </div>
 
-        <!-- Painel admin: adicionar imagens secundárias/principal -->
-        <div class="img-panel">
+        <!-- Botão admin para abrir/fechar painel -->
+        <div style="margin-top:10px">
+          <button id="btnGerenciarImgs" class="btn btn-secondary btn-sm admin-only" type="button">Gerenciar imagens</button>
+        </div>
+
+        <!-- Painel admin: adicionar/remover imagens -->
+        <div class="img-panel admin-only hidden" id="panel-imagens">
           <div class="muted">Gerenciar imagens</div>
           <div class="img-list" id="imgList"></div>
           <div class="img-form">
@@ -171,39 +179,38 @@
     </div>
   </aside>
 
-<script>
+  <!-- Auth helpers -->
+  <script src="/js/auth.js"></script>
+  <script>
 /* ================== Config e elementos ================== */
 const API = '/api/produtos';
 const url = new URL(location.href);
 const produtoId = Number(url.searchParams.get('id'));
 
+const gallery = document.getElementById('gallery');
 const gMain   = document.getElementById('gMain');
 const gThumbs = document.getElementById('gThumbs');
 const imgList = document.getElementById('imgList');
 
+const btnGerenciarImgs = document.getElementById('btnGerenciarImgs');
+const panelImagens     = document.getElementById('panel-imagens');
+const btnAddImage      = document.getElementById('btnAddImage');
+
 const cartDrawer     = document.getElementById('cartDrawer');
 const drawerBackdrop = document.getElementById('drawerBackdrop');
-
-const btnComprar     = document.getElementById('btnComprar');
-const btnAddCart     = document.getElementById('btnAddCart');
 const btnCloseDrawer = document.getElementById('btnCloseDrawer');
 const btnContinue    = document.getElementById('btnContinue');
 const btnFinalizar   = document.getElementById('btnFinalizar');
-const btnAddImage    = document.getElementById('btnAddImage');
-const btnCarrinhoHead= document.getElementById('btnCarrinhoHead');
+const btnComprar     = document.getElementById('btnComprar');
+const btnAddCart     = document.getElementById('btnAddCart');
 const btnCalcFrete   = document.getElementById('btnCalcFrete');
+const btnCarrinhoHead= document.getElementById('btnCarrinhoHead');
 
 const cartItemsEl      = document.getElementById('cartItems');
 const resumoValoresEl  = document.getElementById('resumoValores');
 const freteOpcoesEl    = document.getElementById('freteOpcoes');
 
 /* ================== Helpers ================== */
-function normSrc(src){
-  if(!src) return '';
-  let s = String(src).replace(/\\/g,'/');
-  if(!s.startsWith('/')) s = '/' + s;
-  return s + `?v=${Date.now()}`;
-}
 function starsHTML(av){
   if(!av) return `☆☆☆☆☆ <span class="muted">(0)</span>`;
   const f = Math.max(0, Math.min(5, Number(av)));
@@ -213,26 +220,50 @@ function starsHTML(av){
   return `${full}${half}${empty} <span class="muted">(10265)</span>`;
 }
 
+/* ======= Auth/UI ======= */
+function syncAdminUI(){
+  const admin = (window.isAdmin && isAdmin());
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = admin ? '' : 'none';
+  });
+}
+
+function ensureAdminOrLogin(){
+  if(!(window.isAdmin && isAdmin())){
+    location.href = '/login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    return false;
+  }
+  return true;
+}
+
 /* ================== Produto + Imagens ================== */
 let produto = null;
-let imagens = [];  // {id, caminhoDestino, principal}
+let imagens = [];   // [{id, url, principal}]
 let activeIndex = 0;
+
+// autoplay
+let autoTimer = null;
+const AUTO_MS = 2000;
+let isHovering = false;
 
 async function loadProduto(){
   const res = await fetch(`${API}/${produtoId}`);
   produto = await res.json();
 
   document.getElementById('pdTitle').textContent = produto.nome;
-  document.getElementById('pdRating').innerHTML = starsHTML(produto.avaliacao);
+  document.getElementById('pdRating').innerHTML  = starsHTML(produto.avaliacao);
   document.getElementById('pdPrice').textContent = `R$ ${Number(produto.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('pdDesc').textContent = produto.descricaoDetalhada || '';
+  document.getElementById('pdDesc').textContent  = produto.descricaoDetalhada || '';
 
   await loadImagens();
   renderCarousel();
   renderAdminImageList();
+  setupAutoplay();     // inicia autoplay após render
+  syncAdminUI();       // mostra/esconde controles após carregar
 }
 
 async function loadImagens(){
+  // Agora o endpoint já retorna { id, url, principal }
   const res = await fetch(`${API}/${produtoId}/imagens`);
   const all = await res.json();
   imagens = all.sort((a,b)=> (b.principal - a.principal) || (a.id - b.id));
@@ -245,21 +276,17 @@ function renderCarousel(){
   if(!imagens.length){
     gMain.innerHTML = `<div class="thumb thumb-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#6b7280">sem imagem</div>`;
     gThumbs.innerHTML = '';
+    stopAutoplay();
     return;
   }
-
-  // imagem ativa
-  const mainSrc = normSrc(imagens[activeIndex].caminhoDestino);
+  const mainSrc = imagens[activeIndex].url;
   gMain.innerHTML = `<img src="${mainSrc}" alt="Imagem do produto">`;
 
-  // miniaturas
   gThumbs.innerHTML = imagens.map((img, i)=>{
-    const s = normSrc(img.caminhoDestino);
     const cls = `thumb-item ${i===activeIndex?'active':''}`;
-    return `<div class="${cls}" data-i="${i}"><img src="${s}" alt=""></div>`;
+    return `<div class="${cls}" data-i="${i}"><img src="${img.url}" alt=""></div>`;
   }).join('');
 
-  // clique nas thumbs (delegado, resiliente a rerender)
   gThumbs.onclick = (e) => {
     const el = e.target.closest('.thumb-item');
     if(!el) return;
@@ -267,26 +294,70 @@ function renderCarousel(){
     if(Number.isNaN(i)) return;
     activeIndex = i;
     renderCarousel();
+    restartAutoplay(); // usuário clicou: recomeça contagem
   };
+}
+
+/* ===== Autoplay com pausa no hover ===== */
+function nextSlide(){
+  if(!imagens.length) return;
+  activeIndex = (activeIndex + 1) % imagens.length;
+  renderCarousel();
+}
+
+function startAutoplay(){
+  if (autoTimer || imagens.length <= 1) return; // não liga com 0/1 imagens
+  autoTimer = setInterval(()=>{
+    if(!isHovering) nextSlide();
+  }, AUTO_MS);
+}
+
+function stopAutoplay(){
+  if(autoTimer){
+    clearInterval(autoTimer);
+    autoTimer = null;
+  }
+}
+
+function restartAutoplay(){
+  stopAutoplay();
+  startAutoplay();
+}
+
+function setupAutoplay(){
+  stopAutoplay();
+  startAutoplay();
+  // pausa ao passar o mouse na área da galeria (main + thumbs)
+  gallery.addEventListener('mouseenter', ()=>{ isHovering = true; });
+  gallery.addEventListener('mouseleave', ()=>{ isHovering = false; });
 }
 
 /* ================== Admin imagens ================== */
 function renderAdminImageList(){
   imgList.innerHTML = imagens.length ? imagens.map(i => `
     <div class="img-item">
-      <span class="muted">${i.caminhoDestino.split('/').pop()}</span>
+      <span class="muted">${(i.url||'').split('/').pop()}</span>
       <span class="tag ${i.principal?'tag-primary':''}">${i.principal?'principal':'secundária'}</span>
       <button class="btn-mini btn-danger" onclick="removerImagem(${i.id})">remover</button>
     </div>
   `).join('') : `<div class="muted">Nenhuma imagem.</div>`;
 }
 
+btnGerenciarImgs.addEventListener('click', ()=>{
+  if(!ensureAdminOrLogin()) return;
+  panelImagens.classList.toggle('hidden');
+  if(!panelImagens.classList.contains('hidden')){
+    renderAdminImageList();
+  }
+});
+
 btnAddImage.addEventListener('click', async ()=>{
+  if(!ensureAdminOrLogin()) return;
   const caminho = (document.getElementById('imgPath').value||'').trim();
   const principal = document.getElementById('imgPrincipal').checked;
   if(!caminho){ alert('Informe o caminho de origem da imagem'); return; }
 
-  const res = await fetch(`${API}/${produtoId}/imagens`, {
+  const res = await apiFetch(`${API}/${produtoId}/imagens`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ caminhoOrigem: caminho, principal })
   });
@@ -298,15 +369,18 @@ btnAddImage.addEventListener('click', async ()=>{
   await loadImagens();
   renderCarousel();
   renderAdminImageList();
+  restartAutoplay();
 });
 
 async function removerImagem(imgId){
-  const res = await fetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
+  if(!ensureAdminOrLogin()) return;
+  const res = await apiFetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
   if(!res.ok){ alert('Erro ao remover imagem'); return; }
   await loadImagens();
   if(activeIndex >= imagens.length) activeIndex = Math.max(0, imagens.length-1);
   renderCarousel();
   renderAdminImageList();
+  restartAutoplay();
 }
 
 /* ================== Drawer do carrinho ================== */
@@ -321,8 +395,8 @@ function closeDrawer(){
   cartDrawer.setAttribute('aria-hidden', 'true');
 }
 drawerBackdrop.addEventListener('click', closeDrawer);
-document.getElementById('btnCloseDrawer').addEventListener('click', closeDrawer);
-document.getElementById('btnContinue').addEventListener('click', closeDrawer);
+btnCloseDrawer.addEventListener('click', closeDrawer);
+btnContinue.addEventListener('click', closeDrawer);
 btnCarrinhoHead?.addEventListener('click', async ()=>{ await renderCart(); openDrawer(); });
 
 /* ================== Carrinho ================== */
@@ -334,10 +408,6 @@ async function addToCart(produtoId, quantidade=1){
 async function renderCart(){
   const res = await fetch('/api/carrinho');
   const c = await res.json();
-
-  // badge no header
-  const count = (c.itens || []).reduce((acc, i) => acc + (i.quantidade||0), 0);
-  document.getElementById('cartCount').textContent = count;
 
   if(!c.itens || !c.itens.length){
     cartItemsEl.innerHTML = `<p class="muted">Seu carrinho está vazio.</p>`;
@@ -382,7 +452,7 @@ async function removerItem(id){
 }
 
 /* Frete */
-btnCalcFrete.addEventListener('click', calcularFrete);
+btnCalcFrete?.addEventListener('click', calcularFrete);
 async function calcularFrete(){
   const cep = (document.getElementById('cep').value || '').replace(/\D/g,'');
   if(cep.length !== 8){ alert('CEP deve ter 8 dígitos'); return; }
@@ -433,8 +503,10 @@ btnAddCart.addEventListener('click', async ()=>{
 btnCarrinhoHead?.addEventListener('click', async ()=>{ await renderCart(); openDrawer(); });
 
 /* Init */
-loadProduto();
-renderCart(); // badge inicial
-</script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  syncAdminUI(); // primeiro estado (antes de fetch)
+  loadProduto();
+});
+  </script>
 </body>
 </html>

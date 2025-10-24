@@ -74,10 +74,15 @@ public class ProdutoController {
     // mini-DTO para o POST de imagem
     public static record NovaImagemDTO(String caminhoOrigem, boolean principal) {}
 
-    /** Lista imagens de um produto (principal primeiro). */
+    // DTO público para a galeria no front (com caminho normalizado)
+    public static record ImagemDTO(Long id, String url, boolean principal) {}
+
+    /** Lista imagens de um produto (principal primeiro) com URL normalizada. */
     @GetMapping("/{id}/imagens")
-    public List<ImagemProduto> listarImagens(@PathVariable Long id) {
-        return imagemRepository.findByProdutoIdOrderByPrincipalDescIdAsc(id);
+    public List<ImagemDTO> listarImagens(@PathVariable Long id) {
+        return imagemRepository.findByProdutoIdOrderByPrincipalDescIdAsc(id).stream()
+            .map(i -> new ImagemDTO(i.getId(), normalizeImg(id, i.getCaminhoDestino()), i.isPrincipal()))
+            .toList();
     }
 
     /** Adiciona imagem a partir de um caminho de origem (o service copia/renomeia). */

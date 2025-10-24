@@ -11,5 +11,7 @@ public interface ImagemProdutoRepository extends JpaRepository<ImagemProduto, Lo
     Optional<ImagemProduto> findFirstByProdutoIdAndPrincipalTrue(Long produtoId);
     Optional<ImagemProduto> findFirstByProdutoIdOrderByIdAsc(Long produtoId);
     List<ImagemProduto> findByProdutoIdOrderByPrincipalDescIdAsc(Long produtoId);
-}
+    List<ImagemProduto> findByProdutoIdOrderByIdAsc(Long produtoId);
 
+    long countByProdutoId(Long produtoId);
+}

@@ -3,6 +3,7 @@ package br.com.julio.pi.backoffice_users.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -40,8 +41,9 @@ public class ProdutoService {
     public Produto incluir(Produto p) {
         validarProduto(p);
         Produto salvo = produtoRepository.save(p);
-        ajustarPrincipalUnico(salvo);
-        return salvo;
+        ajustarPrincipalUnico(salvo);     // no-máx-1 principal
+        garantirUmaPrincipal(salvo);      // pelo-menos-1 principal se houver imagens
+        return produtoRepository.save(salvo);
     }
 
     @Transactional
@@ -51,7 +53,8 @@ public class ProdutoService {
         validarProduto(existente);
         Produto salvo = produtoRepository.save(existente);
         ajustarPrincipalUnico(salvo);
-        return salvo;
+        garantirUmaPrincipal(salvo);
+        return produtoRepository.save(salvo);
     }
 
     @Transactional(readOnly = true)
@@ -118,13 +121,30 @@ public class ProdutoService {
         if (caminhoOrigem == null || caminhoOrigem.isBlank())
             throw new IllegalArgumentException("Caminho de origem da imagem é obrigatório");
 
-        Produto p = buscarPorId(produtoId); // aqui não preciso das imagens ainda
+        Produto p = buscarPorIdComImagens(produtoId); // já trago imagens
+
         try {
             String caminhoRelativo = imageStorageUtil.copyForProduct(produtoId, caminhoOrigem);
-            ImagemProduto img = new ImagemProduto(caminhoRelativo, principal, p);
+
+            // Se for a primeira imagem do produto, torna-se principal mesmo que não tenha marcado
+            boolean primeiraImagem = (p.getImagens() == null || p.getImagens().isEmpty());
+            boolean marcarComoPrincipal = principal || primeiraImagem;
+
+            // Se marcou principal, desmarca as demais
+            if (marcarComoPrincipal) {
+                if (p.getImagens() != null) {
+                    for (ImagemProduto i : p.getImagens()) {
+                        i.setPrincipal(false);
+                    }
+                }
+            }
+
+            ImagemProduto img = new ImagemProduto(caminhoRelativo, marcarComoPrincipal, p);
             p.getImagens().add(img);
+
             produtoRepository.save(p);
             ajustarPrincipalUnico(p);
+            garantirUmaPrincipal(p);
             return img;
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao copiar imagem: " + e.getMessage(), e);
@@ -136,17 +156,28 @@ public class ProdutoService {
     public ImagemProduto adicionarImagem(Long produtoId, String caminhoDestino, boolean principal) {
         if (caminhoDestino == null || caminhoDestino.isBlank())
             throw new IllegalArgumentException("Caminho da imagem obrigatório");
-        Produto p = buscarPorId(produtoId);
-        ImagemProduto img = new ImagemProduto(caminhoDestino, principal, p);
+
+        Produto p = buscarPorIdComImagens(produtoId);
+
+        boolean primeiraImagem = (p.getImagens() == null || p.getImagens().isEmpty());
+        boolean marcarComoPrincipal = principal || primeiraImagem;
+
+        if (marcarComoPrincipal && p.getImagens() != null) {
+            for (ImagemProduto i : p.getImagens()) i.setPrincipal(false);
+        }
+
+        ImagemProduto img = new ImagemProduto(caminhoDestino, marcarComoPrincipal, p);
         p.getImagens().add(img);
         produtoRepository.save(p);
+
         ajustarPrincipalUnico(p);
+        garantirUmaPrincipal(p);
         return img;
     }
 
     @Transactional
     public boolean removerImagem(Long produtoId, Long imagemId) {
-        Produto p = buscarPorId(produtoId);
+        Produto p = buscarPorIdComImagens(produtoId);
 
         List<ImagemProduto> imagens = p.getImagens();
         ImagemProduto alvo = imagens.stream()
@@ -158,10 +189,26 @@ public class ProdutoService {
             return false; // não encontrou imagem
         }
 
+        boolean eraPrincipal = alvo.isPrincipal();
+
+        // remove do agregate (orphanRemoval deve cuidar do delete físico no DB)
         imagens.remove(alvo);
-        produtoRepository.save(p); // orphanRemoval no mapeamento faz o resto
+        produtoRepository.save(p);
+
+        // Se removi a principal, promovo a mais antiga (ou primeira da lista)
+        if (eraPrincipal && !imagens.isEmpty()) {
+            // pega a com menor id (mais antiga)
+            ImagemProduto proxima = imagens.stream()
+                    .min(Comparator.comparing(ImagemProduto::getId))
+                    .orElse(imagens.get(0));
+            for (ImagemProduto i : imagens) i.setPrincipal(false);
+            proxima.setPrincipal(true);
+        }
 
         ajustarPrincipalUnico(p);
+        garantirUmaPrincipal(p);
+
+        produtoRepository.save(p);
         return true;
     }
 
@@ -202,8 +249,9 @@ public class ProdutoService {
         }
     }
 
-    /** Garante no máximo 1 imagem principal por produto */
+    /** Garante no máximo 1 imagem principal por produto. */
     private void ajustarPrincipalUnico(Produto p) {
+        if (p.getImagens() == null || p.getImagens().isEmpty()) return;
         boolean encontrou = false;
         for (ImagemProduto img : p.getImagens()) {
             if (img.isPrincipal()) {
@@ -216,7 +264,20 @@ public class ProdutoService {
         }
     }
 
-    // ======================== NOVO: Camada DTO ========================
+    /** Se houver imagens e nenhuma marcada como principal, marca a mais antiga (menor id). */
+    private void garantirUmaPrincipal(Produto p) {
+        if (p.getImagens() == null || p.getImagens().isEmpty()) return;
+
+        boolean haPrincipal = p.getImagens().stream().anyMatch(ImagemProduto::isPrincipal);
+        if (!haPrincipal) {
+            ImagemProduto antiga = p.getImagens().stream()
+                    .min(Comparator.comparing(ImagemProduto::getId))
+                    .orElse(p.getImagens().get(0));
+            antiga.setPrincipal(true);
+        }
+    }
+
+    // ======================== Camada DTO ========================
 
     /** Lista já em formato DTO (mais novos primeiro). */
     @Transactional(readOnly = true)

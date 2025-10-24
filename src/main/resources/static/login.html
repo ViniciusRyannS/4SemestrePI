@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Entrar • Sua Loja</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .auth-wrap{max-width:420px;margin:48px auto;padding:24px;border:2px solid #2f4a57;border-radius:12px;background:#fff}
+    .auth-title{font-weight:800;font-size:1.4rem;margin:0 0 12px;color:#0f2d38}
+    .muted{color:#475569}
+    .input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px}
+    .btn{background:#165a72;color:#fff;border:none;padding:12px 18px;border-radius:10px;cursor:pointer;width:100%}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .err{margin-top:10px;color:#b91c1c;font-size:.95rem}
+  </style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-title">Acessar</div>
+    <p class="muted" style="margin-top:-6px">Use um dos usuários semeados (p.ex. <code>admin@pi.com</code> / <code>admin123</code>).</p>
+
+    <form id="formLogin">
+      <label>E-mail</label>
+      <input id="email" class="input" type="email" required placeholder="voce@exemplo.com"/>
+
+      <div style="height:10px"></div>
+
+      <label>Senha</label>
+      <input id="senha" class="input" type="password" required placeholder="••••••••"/>
+
+      <div style="height:14px"></div>
+
+      <button id="btnLogin" class="btn" type="submit">Entrar</button>
+      <div id="msg" class="err" hidden></div>
+    </form>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    // Se já estiver logado, manda pra home
+    if (isLogged && isLogged()) {
+      location.href = '/';
+    }
+
+    const form = document.getElementById('formLogin');
+    const btn  = document.getElementById('btnLogin');
+    const msg  = document.getElementById('msg');
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      msg.hidden = true; btn.disabled = true;
+
+      const payload = {
+        email: document.getElementById('email').value.trim(),
+        senha: document.getElementById('senha').value
+      };
+
+      try{
+        const res = await fetch('/api/auth/login', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(()=>null);
+
+        if(!res.ok){
+          const message = (data && (data.message || data.detail)) || 'Credenciais inválidas';
+          throw new Error(message);
+        }
+
+        // Backend retorna: { token, expiresAt, nome, email, grupo }
+        setAuth({
+          token: data.token,
+          nome: data.nome,
+          grupo: data.grupo,     // normaliza no auth.js
+          expiresAt: data.expiresAt,
+          email: data.email
+        });
+
+        location.href = '/'; // vai pra home
+      }catch(err){
+        msg.textContent = err.message || 'Falha no login';
+        msg.hidden = false;
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
