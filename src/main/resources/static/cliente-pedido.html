@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detalhe do pedido</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body class="container">
+  <div id="box"></div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+  async function load(){
+    if(!ClienteAuth.isLogged()){ location.href='/cliente-login.html?returnUrl='+encodeURIComponent(location.pathname+location.search); return; }
+    const id = new URLSearchParams(location.search).get('id');
+    const res = await ClienteAuth.apiFetch('/api/clientes/pedidos/'+id);
+    if(!res.ok){ document.getElementById('box').innerHTML = '<div class="alert error">Pedido não encontrado.</div>'; return; }
+    const p = await res.json();
+    document.getElementById('box').innerHTML = `
+      <h1>Pedido #${p.id}</h1>
+      <div class="muted">${new Date(p.criadoEm).toLocaleString('pt-BR')}</div>
+      <div class="tag">${p.status}</div>
+
+      <h3 class="mt-16">Itens</h3>
+      <table class="tabela">
+        <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th></tr></thead>
+        <tbody>
+          ${p.itens.map(i => `
+            <tr>
+              <td>${i.nome}</td>
+              <td>R$ ${Number(i.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+              <td>${i.quantidade}</td>
+              <td>R$ ${Number(i.totalLinha).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+
+      <h3 class="mt-16">Entrega</h3>
+      <div>${p.endLogradouro}, ${p.endNumero} ${p.endComplemento?'- '+p.endComplemento:''}</div>
+      <div>${p.endBairro} — ${p.endCidade}/${p.endUf} • CEP ${p.endCep}</div>
+
+      <h3 class="mt-16">Resumo</h3>
+      <div class="muted">Subtotal: R$ ${Number(p.subtotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div class="muted">Frete (${p.modalidadeFrete}): R$ ${Number(p.frete).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div><strong>Total: R$ ${Number(p.total).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+
+      ${p.status==='AGUARDANDO_PAGAMENTO' ? `
+        <div class="alert">Aguardando pagamento. Caso tenha escolhido boleto, pague para liberar o pedido.</div>
+      `: ``}
+    `;
+  }
+  load();
+  </script>
+</body>
+</html>

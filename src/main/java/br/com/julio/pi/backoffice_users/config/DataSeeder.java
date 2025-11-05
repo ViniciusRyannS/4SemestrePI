@@ -18,26 +18,32 @@ public class DataSeeder {
     @Order(1)
     CommandLineRunner seedUsuarios(UsuarioRepository repo, SenhaService senhaService) {
         return args -> {
-            System.out.println(">> [SEED] Iniciando. Total antes = " + repo.count());
 
+            // ADMIN
             if (!repo.existsByEmail("admin@pi.com")) {
                 Usuario u = new Usuario();
                 u.setNome("Administrador");
                 u.setCpf("00000000000");
                 u.setEmail("admin@pi.com");
-                String hash = senhaService.gerarHash("admin123");
-                u.setSenha(hash);
-                u.setGrupo(Grupo.ADMINISTRADOR);
+                u.setSenha(senhaService.gerarHash("admin123"));
+                u.setGrupo(Grupo.ADMINISTRADOR); // <<< aqui estava dando erro quando era ADMIN
                 u.setStatus(Status.ATIVO);
-
                 repo.save(u);
-                System.out.println(">> [SEED] ADMIN criado (email=admin@pi.com)");
-                System.out.println(">> [SEED] HASH salvo = " + hash);
-            } else {
-                System.out.println(">> [SEED] ADMIN já existe (não vou duplicar).");
             }
 
-            System.out.println(">> [SEED] Concluído. Total depois = " + repo.count());
+            // ESTOQUISTA (opcional, mas útil para testar)
+            if (!repo.existsByEmail("estoquista@pi.com")) {
+                Usuario e = new Usuario();
+                e.setNome("Estoquista");
+                e.setCpf("11111111111");
+                e.setEmail("estoquista@pi.com");
+                e.setSenha(senhaService.gerarHash("estoque123"));
+                e.setGrupo(Grupo.ESTOQUISTA);
+                e.setStatus(Status.ATIVO);
+                repo.save(e);
+            }
+
+            System.out.println("Total de usuários: " + repo.count());
         };
     }
 }

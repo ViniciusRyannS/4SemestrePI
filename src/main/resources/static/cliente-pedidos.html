@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meus pedidos</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body class="container">
+  <h1>Meus pedidos</h1>
+  <div id="lista"></div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+  async function load(){
+    if(!ClienteAuth.isLogged()){ location.href='/cliente-login.html?returnUrl='+encodeURIComponent(location.pathname); return; }
+    const res = await ClienteAuth.apiFetch('/api/clientes/pedidos');
+    const arr = await res.json();
+    if(!arr.length){ document.getElementById('lista').innerHTML = '<div class="muted">Nenhum pedido.</div>'; return; }
+
+    document.getElementById('lista').innerHTML = arr.map(p => `
+      <div class="card">
+        <div class="titulo">Pedido #${p.id} — <span class="tag">${p.status}</span></div>
+        <div class="muted">${new Date(p.criadoEm).toLocaleString('pt-BR')}</div>
+        <div class="mt-8">Entrega: ${p.endLogradouro}, ${p.endNumero} — ${p.endCidade}/${p.endUf} • CEP ${p.endCep}</div>
+        <div class="mt-8">Frete: ${p.modalidadeFrete} • Total: <strong>R$ ${Number(p.total).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+        <div class="mt-8">
+          <a class="btn" href="/cliente-pedido.html?id=${p.id}">ver detalhes</a>
+        </div>
+      </div>
+    `).join('');
+  }
+  load();
+  </script>
+</body>
+</html>
