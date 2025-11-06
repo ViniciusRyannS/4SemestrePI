@@ -273,33 +273,41 @@ public class ConsoleController {
     }
 
     private void alterarSenha(long id) {
-        System.out.println();
-        System.out.println("--- Alterar Senha ---");
+    System.out.println();
+    System.out.println("--- Alterar Senha ---");
 
-        Optional<Usuario> opt = usuarioService.findById(id);
-        if (opt.isEmpty()) {
-            System.out.println(">> Usuário não encontrado.");
-            return;
-        }
-
-        AlterarSenhaDTO dto = new AlterarSenhaDTO();
-        System.out.print("Nova senha: ");
-        dto.setNovaSenha(in.nextLine().trim());
-        System.out.print("Confirmar nova senha: ");
-        dto.setConfirmarSenha(in.nextLine().trim());
-
-        if (!dto.getNovaSenha().equals(dto.getConfirmarSenha())) {
-            System.out.println(">> Senhas não conferem.");
-            return;
-        }
-
-        try {
-            usuarioService.alterarSenha(id, dto.getNovaSenha());
-            System.out.println(">> Senha alterada com sucesso.");
-        } catch (Exception e) {
-            System.out.println(">> Erro ao alterar senha: " + e.getMessage());
-        }
+    Optional<Usuario> opt = usuarioService.findById(id);
+    if (opt.isEmpty()) {
+        System.out.println(">> Usuário não encontrado.");
+        return;
     }
+
+    System.out.print("Nova senha: ");
+    String nova = in.nextLine().trim();
+
+    System.out.print("Confirmar nova senha: ");
+    String conf = in.nextLine().trim();
+
+    if (!nova.equals(conf)) {
+        System.out.println(">> Senhas não conferem.");
+        return;
+    }
+    if (nova.length() < 6) {
+        System.out.println(">> Senha muito curta (mínimo 6 caracteres).");
+        return;
+    }
+    if (nova.contains(" ")) {
+        System.out.println(">> Senha não pode conter espaços.");
+        return;
+    }
+
+    try {
+        usuarioService.alterarSenha(id, nova); // assinatura já usada por você
+        System.out.println(">> Senha alterada com sucesso.");
+    } catch (Exception e) {
+        System.out.println(">> Erro ao alterar senha: " + e.getMessage());
+    }
+}
 
     private boolean isAdmin(Usuario u) {
         return u.getGrupo() == Grupo.ADMINISTRADOR;
