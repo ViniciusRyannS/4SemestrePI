@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sua Loja • Produto</title>
+  <link rel="stylesheet" href="/styles.css"/>
+
+  <style>
+    /* --- Só o que é exclusivo desta página --- */
+    .pd-container{max-width:1200px;margin:16px auto;padding:0 16px}
+    .pd-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:28px}
+    @media (max-width: 960px){ .pd-grid{grid-template-columns:1fr} }
+    /* Galeria */
+    .gallery{border:2px solid #2f4a57;border-radius:12px;padding:12px;background:#fff}
+    .gallery-main{width:100%;aspect-ratio:4/3;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc;position:relative}
+    .gallery-main img{width:100%;height:100%;object-fit:cover;display:block}
+    .gallery-thumbs{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .thumb-item{width:72px;height:72px;border:2px solid #e5e7eb;border-radius:8px;overflow:hidden;cursor:pointer;background:#fff}
+    .thumb-item img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb-item.active{border-color:#165a72;box-shadow:0 0 0 2px rgba(22,90,114,.15) inset}
+    /* Info */
+    .pd-title{font-size:1.6rem;font-weight:800;margin:0 0 6px;color:#0f2d38}
+    .pd-rating{margin:6px 0;color:#f59e0b;font-size:1.1rem}
+    .pd-price{margin:12px 0;font-size:1.4rem;font-weight:800;color:#0f2d38}
+    .pd-price .sub{display:block;color:#374151;font-weight:500;font-size:.95rem}
+    .pd-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn-green{background:#1f8f5c}
+    .btn-green:hover{opacity:.95}
+    .pd-desc{margin-top:16px;color:#374151;line-height:1.5}
+    /* Admin imagens */
+    .img-panel{margin-top:14px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed #cbd5e1}
+    .img-list{display:flex;gap:8px;flex-direction:column;margin:8px 0}
+    .img-item{display:flex;align-items:center;gap:8px;justify-content:space-between}
+    .tag{padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151;font-size:.75rem}
+    .tag-primary{background:#165a72;color:#fff}
+    .img-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .chk{display:flex;align-items:center;gap:6px;color:#0f2d38}
+    /* Drawer (globais) */
+    .drawer-backdrop{position:fixed;inset:0;background:rgba(15,29,38,.45);backdrop-filter:saturate(120%) blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:60}
+    .drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:#fff;border-left:2px solid #2f4a57;box-shadow:-8px 0 24px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .25s ease;z-index:61;display:flex;flex-direction:column}
+    .drawer.open{transform:translateX(0)}
+    .drawer-backdrop.open{opacity:1;pointer-events:auto}
+    .drawer__head{padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between}
+    .drawer__title{font-weight:800;color:#0f2d38}
+    .drawer__body{padding:12px 16px;overflow:auto;flex:1}
+    .drawer__foot{padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-wrap:wrap}
+    .btn-outline{background:#fff;color:#165a72;border:2px solid #165a72}
+    .btn-block{width:100%}
+
+    /* Admin UI: escondido por padrão, JS mostra se for ADMINISTRADOR */
+    .admin-only{display:none}
+  </style>
+</head>
+<body>
+
+  <!-- TOP -->
+  <div class="gs-topstrip">
+    <div class="gs-topstrip__content">
+      <span>Adicione <strong>R$ 250,00</strong> ao carrinho para ter <strong>FRETE GRÁTIS</strong></span>
+      <span class="city">São Paulo ▾</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="gs-header">
+    <div class="gs-header__left">
+      <a href="/"><img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'"></a>
+    </div>
+
+    <div class="gs-header__center">
+      <div class="gs-search">
+        <input id="searchBox" type="text" placeholder="Encontre o suplemento ideal para você"/>
+        <button class="gs-search__btn" type="button" onclick="history.back()">↩</button>
+      </div>
+    </div>
+
+    <div class="gs-header__right">
+      <a class="gs-link" href="/login.html">👤<span>Entrar</span></a>
+      <a class="gs-link" href="#">❤<span>Favoritos</span></a>
+      <a class="gs-link" href="#">📞<span>Fale Conosco<br/>Clique aqui</span></a>
+
+      <button class="gs-cart" id="btnCarrinhoHead" title="Carrinho">
+        🛒<span id="cartCount" class="gs-badge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="gs-nav">
+    <button class="gs-burger">☰</button>
+    <span class="gs-nav__item gs-nav__item--cat">CATEGORIAS ▾</span>
+    <a class="gs-nav__item" href="#">TOP 20</a>
+    <a class="gs-nav__item" href="#">LANÇAMENTOS</a>
+    <a class="gs-nav__item" href="#">WHEY PROTEIN</a>
+    <a class="gs-nav__item" href="#">CREATINA</a>
+    <a class="gs-nav__item" href="#">PRÉ-TREINO</a>
+    <a class="gs-nav__item" href="#">OBJETIVOS</a>
+    <a class="gs-nav__item" href="#">SNACKS</a>
+    <a class="gs-nav__item" href="#">MODA</a>
+    <a class="gs-nav__item" href="#">ACESSÓRIOS</a>
+    <a class="gs-nav__item" href="#">OUTLET</a>
+  </nav>
+
+  <main class="pd-container">
+    <a href="/" class="btn btn-secondary" style="margin:8px 0;display:inline-block">← Voltar</a>
+
+    <div class="pd-grid">
+      <!-- GALERIA -->
+      <section>
+        <div id="gallery" class="gallery">
+          <div id="gMain" class="gallery-main">
+            <div class="thumb thumb-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#6b7280">
+              sem imagem
+            </div>
+          </div>
+          <div id="gThumbs" class="gallery-thumbs"></div>
+        </div>
+
+        <!-- Botão admin para abrir/fechar painel -->
+        <div style="margin-top:10px">
+          <button id="btnGerenciarImgs" class="btn btn-secondary btn-sm admin-only" type="button">Gerenciar imagens</button>
+        </div>
+
+        <!-- Painel admin: adicionar/remover imagens -->
+        <div class="img-panel admin-only hidden" id="panel-imagens">
+          <div class="muted">Gerenciar imagens</div>
+          <div class="img-list" id="imgList"></div>
+          <div class="img-form">
+            <input class="input" id="imgPath" placeholder="Caminho de origem (arquivo local/rede)"/>
+            <label class="chk"><input type="checkbox" id="imgPrincipal"> Principal</label>
+            <button class="btn" id="btnAddImage">Adicionar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- INFO -->
+      <section>
+        <h1 id="pdTitle" class="pd-title">Produto</h1>
+        <div id="pdRating" class="pd-rating">☆☆☆☆☆ <span class="muted">(0)</span></div>
+        <div class="pd-price">
+          <span id="pdPrice">R$ 0,00</span>
+          <span class="sub">ou até 6x sem juros</span>
+        </div>
+
+        <div class="pd-cta">
+          <button id="btnComprar" class="btn btn-green">COMPRAR</button>
+          <button id="btnAddCart" class="btn btn-secondary">Adicionar ao carrinho</button>
+        </div>
+
+        <div id="pdDesc" class="pd-desc"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Drawer do carrinho -->
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="cartDrawer" class="drawer" aria-hidden="true">
+    <div class="drawer__head">
+      <div class="drawer__title">Seu carrinho</div>
+      <button class="btn-mini btn-danger" id="btnCloseDrawer">Fechar</button>
+    </div>
+    <div class="drawer__body">
+      <div id="cartItems"></div>
+
+      <div class="mt-16" id="resumoValores"></div>
+    </div>
+    <div class="drawer__foot">
+      <button class="btn btn-outline btn-block" id="btnContinue">Continuar comprando</button>
+      <button class="btn btn-block" id="btnFinalizar">Finalizar compra</button>
+    </div>
+  </aside>
+
+  <!-- Auth helpers -->
+  <script src="/js/auth.js"></script>
+  <script>
+/* ================== Config e elementos ================== */
+const API = '/api/produtos';
+const url = new URL(location.href);
+const produtoId = Number(url.searchParams.get('id'));
+
+const gallery = document.getElementById('gallery');
+const gMain   = document.getElementById('gMain');
+const gThumbs = document.getElementById('gThumbs');
+const imgList = document.getElementById('imgList');
+
+const btnGerenciarImgs = document.getElementById('btnGerenciarImgs');
+const panelImagens     = document.getElementById('panel-imagens');
+const btnAddImage      = document.getElementById('btnAddImage');
+
+const cartDrawer     = document.getElementById('cartDrawer');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
+const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+const btnContinue    = document.getElementById('btnContinue');
+const btnFinalizar   = document.getElementById('btnFinalizar');
+const btnComprar     = document.getElementById('btnComprar');
+const btnAddCart     = document.getElementById('btnAddCart');
+const btnCalcFrete   = document.getElementById('btnCalcFrete');
+const btnCarrinhoHead= document.getElementById('btnCarrinhoHead');
+
+const cartItemsEl      = document.getElementById('cartItems');
+const resumoValoresEl  = document.getElementById('resumoValores');
+const freteOpcoesEl    = document.getElementById('freteOpcoes');
+
+/* ================== Helpers ================== */
+function starsHTML(av){
+  if(!av) return `☆☆☆☆☆ <span class="muted">(0)</span>`;
+  const f = Math.max(0, Math.min(5, Number(av)));
+  const full = '★'.repeat(Math.floor(f));
+  const half = (f % 1) ? '⯪' : '';
+  const empty = '☆'.repeat(5 - Math.ceil(f));
+  return `${full}${half}${empty} <span class="muted">(10265)</span>`;
+}
+
+/* ======= Auth/UI ======= */
+function syncAdminUI(){
+  const admin = (window.isAdmin && isAdmin());
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = admin ? '' : 'none';
+  });
+}
+
+function ensureAdminOrLogin(){
+  if(!(window.isAdmin && isAdmin())){
+    location.href = '/login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    return false;
+  }
+  return true;
+}
+
+/* ================== Produto + Imagens ================== */
+let produto = null;
+let imagens = [];   // [{id, url, principal}]
+let activeIndex = 0;
+
+// autoplay
+let autoTimer = null;
+const AUTO_MS = 2000;
+let isHovering = false;
+
+async function loadProduto(){
+  const res = await fetch(`${API}/${produtoId}`);
+  produto = await res.json();
+
+  document.getElementById('pdTitle').textContent = produto.nome;
+  document.getElementById('pdRating').innerHTML  = starsHTML(produto.avaliacao);
+  document.getElementById('pdPrice').textContent = `R$ ${Number(produto.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+  document.getElementById('pdDesc').textContent  = produto.descricaoDetalhada || '';
+
+  await loadImagens();
+  renderCarousel();
+  renderAdminImageList();
+  setupAutoplay();     // inicia autoplay após render
+  syncAdminUI();       // mostra/esconde controles após carregar
+}
+
+async function loadImagens(){
+  // Agora o endpoint já retorna { id, url, principal }
+  const res = await fetch(`${API}/${produtoId}/imagens`);
+  const all = await res.json();
+  imagens = all.sort((a,b)=> (b.principal - a.principal) || (a.id - b.id));
+  const idxPrincipal = imagens.findIndex(i=>i.principal);
+  activeIndex = idxPrincipal >= 0 ? idxPrincipal : 0;
+}
+
+/* ================== Carrossel ================== */
+function renderCarousel(){
+  if(!imagens.length){
+    gMain.innerHTML = `<div class="thumb thumb-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#6b7280">sem imagem</div>`;
+    gThumbs.innerHTML = '';
+    stopAutoplay();
+    return;
+  }
+  const mainSrc = imagens[activeIndex].url;
+  gMain.innerHTML = `<img src="${mainSrc}" alt="Imagem do produto">`;
+
+  gThumbs.innerHTML = imagens.map((img, i)=>{
+    const cls = `thumb-item ${i===activeIndex?'active':''}`;
+    return `<div class="${cls}" data-i="${i}"><img src="${img.url}" alt=""></div>`;
+  }).join('');
+
+  gThumbs.onclick = (e) => {
+    const el = e.target.closest('.thumb-item');
+    if(!el) return;
+    const i = Number(el.dataset.i);
+    if(Number.isNaN(i)) return;
+    activeIndex = i;
+    renderCarousel();
+    restartAutoplay(); // usuário clicou: recomeça contagem
+  };
+}
+
+/* ===== Autoplay com pausa no hover ===== */
+function nextSlide(){
+  if(!imagens.length) return;
+  activeIndex = (activeIndex + 1) % imagens.length;
+  renderCarousel();
+}
+
+function startAutoplay(){
+  if (autoTimer || imagens.length <= 1) return; // não liga com 0/1 imagens
+  autoTimer = setInterval(()=>{
+    if(!isHovering) nextSlide();
+  }, AUTO_MS);
+}
+
+function stopAutoplay(){
+  if(autoTimer){
+    clearInterval(autoTimer);
+    autoTimer = null;
+  }
+}
+
+function restartAutoplay(){
+  stopAutoplay();
+  startAutoplay();
+}
+
+function setupAutoplay(){
+  stopAutoplay();
+  startAutoplay();
+  // pausa ao passar o mouse na área da galeria (main + thumbs)
+  gallery.addEventListener('mouseenter', ()=>{ isHovering = true; });
+  gallery.addEventListener('mouseleave', ()=>{ isHovering = false; });
+}
+
+/* ================== Admin imagens ================== */
+function renderAdminImageList(){
+  imgList.innerHTML = imagens.length ? imagens.map(i => `
+    <div class="img-item">
+      <span class="muted">${(i.url||'').split('/').pop()}</span>
+      <span class="tag ${i.principal?'tag-primary':''}">${i.principal?'principal':'secundária'}</span>
+      <button class="btn-mini btn-danger" onclick="removerImagem(${i.id})">remover</button>
+    </div>
+  `).join('') : `<div class="muted">Nenhuma imagem.</div>`;
+}
+
+btnGerenciarImgs.addEventListener('click', ()=>{
+  if(!ensureAdminOrLogin()) return;
+  panelImagens.classList.toggle('hidden');
+  if(!panelImagens.classList.contains('hidden')){
+    renderAdminImageList();
+  }
+});
+
+btnAddImage.addEventListener('click', async ()=>{
+  if(!ensureAdminOrLogin()) return;
+  const caminho = (document.getElementById('imgPath').value||'').trim();
+  const principal = document.getElementById('imgPrincipal').checked;
+  if(!caminho){ alert('Informe o caminho de origem da imagem'); return; }
+
+  const res = await apiFetch(`${API}/${produtoId}/imagens`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ caminhoOrigem: caminho, principal })
+  });
+  if(!res.ok){ alert('Erro ao adicionar imagem'); return; }
+
+  document.getElementById('imgPath').value = '';
+  document.getElementById('imgPrincipal').checked = false;
+
+  await loadImagens();
+  renderCarousel();
+  renderAdminImageList();
+  restartAutoplay();
+});
+
+async function removerImagem(imgId){
+  if(!ensureAdminOrLogin()) return;
+  const res = await apiFetch(`${API}/${produtoId}/imagens/${imgId}`, { method:'DELETE' });
+  if(!res.ok){ alert('Erro ao remover imagem'); return; }
+  await loadImagens();
+  if(activeIndex >= imagens.length) activeIndex = Math.max(0, imagens.length-1);
+  renderCarousel();
+  renderAdminImageList();
+  restartAutoplay();
+}
+
+/* ================== Drawer do carrinho ================== */
+function openDrawer(){
+  cartDrawer.classList.add('open');
+  drawerBackdrop.classList.add('open');
+  cartDrawer.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer(){
+  cartDrawer.classList.remove('open');
+  drawerBackdrop.classList.remove('open');
+  cartDrawer.setAttribute('aria-hidden', 'true');
+}
+drawerBackdrop.addEventListener('click', closeDrawer);
+btnCloseDrawer.addEventListener('click', closeDrawer);
+btnContinue.addEventListener('click', closeDrawer);
+btnCarrinhoHead?.addEventListener('click', async ()=>{ await renderCart(); openDrawer(); });
+
+/* ================== Carrinho ================== */
+async function addToCart(produtoId, quantidade=1){
+  const res = await fetch(`/api/carrinho/itens?produtoId=${produtoId}&quantidade=${quantidade}`, { method:'POST' });
+  if(!res.ok){ alert('Não foi possível adicionar ao carrinho'); return false; }
+  return true;
+}
+async function renderCart(){
+  const res = await fetch('/api/carrinho');
+  const c = await res.json();
+
+  if(!c.itens || !c.itens.length){
+    cartItemsEl.innerHTML = `<p class="muted">Seu carrinho está vazio.</p>`;
+  }else{
+    cartItemsEl.innerHTML = `
+      <table class="tabela">
+        <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th><th></th></tr></thead>
+        <tbody>
+          ${c.itens.map(i => `
+            <tr>
+              <td>${i.nome}</td>
+              <td>R$ ${Number(i.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+              <td>
+                <button class="btn-mini" onclick="alterarQtd(${i.produtoId}, ${i.quantidade-1})">–</button>
+                <span class="qtd">${i.quantidade}</span>
+                <button class="btn-mini" onclick="alterarQtd(${i.produtoId}, ${i.quantidade+1})">+</button>
+              </td>
+              <td>R$ ${Number(i.preco * i.quantidade).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+              <td><button class="btn-mini btn-danger" onclick="removerItem(${i.produtoId})">remover</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  const freteStr = c.modalidadeFrete ? `Frete (${c.modalidadeFrete})` : `Frete`;
+  resumoValoresEl.innerHTML = `
+    <div class="muted"><span class="label">Subtotal:</span> R$ ${Number(c.subtotal ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+    <div class="muted"><span class="label">${freteStr}:</span> R$ ${Number(c.frete ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+    <div class="muted"><span class="label">Total:</span> <strong>R$ ${Number(c.total ?? 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+  `;
+}
+async function alterarQtd(id, q){
+  const res = await fetch(`/api/carrinho/itens/${id}?quantidade=${q}`, { method:'PUT' });
+  if(!res.ok){ alert('Erro ao atualizar quantidade'); return; }
+  renderCart();
+}
+async function removerItem(id){
+  const res = await fetch(`/api/carrinho/itens/${id}`, { method:'DELETE' });
+  if(!res.ok){ alert('Erro ao remover item'); return; }
+  renderCart();
+}
+
+/* Finalização */
+// btnFinalizar.addEventListener('click', async ()=>{
+ // const res = await fetch('/api/carrinho/finalizar', { method:'POST' });
+ // if(!res.ok){
+   // const e = await res.json().catch(()=>({detail:'Não foi possível finalizar'}));
+   // alert(e.detail || 'Não foi possível finalizar');
+   // return;
+  // }
+
+  btnFinalizar.addEventListener('click', async ()=>{
+  if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+    const ret = encodeURIComponent(location.pathname + location.search);
+    location.href = '/cliente-login.html?returnUrl=' + ret;
+    return;
+  }
+  const cart = await (await fetch('/api/carrinho')).json();
+  if(!cart.itens || !cart.itens.length){ 
+    alert('Seu carrinho está vazio');
+    return; 
+  }
+  
+  // Removida verificação de frete aqui
+  closeDrawer();
+  location.href = '/cliente-checkout.html';
+});
+
+/* Comprar / Adicionar -> abre drawer */
+btnComprar.addEventListener('click', async ()=>{
+  const ok = await addToCart(produtoId, 1);
+  if(ok){ await renderCart(); openDrawer(); }
+});
+btnAddCart.addEventListener('click', async ()=>{
+  const ok = await addToCart(produtoId, 1);
+  if(ok){ await renderCart(); openDrawer(); }
+});
+btnCarrinhoHead?.addEventListener('click', async ()=>{ await renderCart(); openDrawer(); });
+
+/* Init */
+document.addEventListener('DOMContentLoaded', ()=>{
+  syncAdminUI(); // primeiro estado (antes de fetch)
+  loadProduto();
+});
+  </script>
+</body>
+</html>

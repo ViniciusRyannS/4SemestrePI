@@ -8,10 +8,11 @@ import java.util.Scanner;
 import org.springframework.stereotype.Component;
 
 import br.com.julio.pi.backoffice_users.dto.AlterarSenhaDTO;
-import br.com.julio.pi.backoffice_users.dto.UsuarioCreateDTO;
+import br.com.julio.pi.backoffice_users.dto.UsuarioCreateDTO; // se já usa, ignore
 import br.com.julio.pi.backoffice_users.dto.UsuarioUpdateDTO;
 import br.com.julio.pi.backoffice_users.model.Usuario;
 import br.com.julio.pi.backoffice_users.model.enums.Grupo;
+import br.com.julio.pi.backoffice_users.service.ProdutoService;
 import br.com.julio.pi.backoffice_users.service.UsuarioService;
 import br.com.julio.pi.backoffice_users.util.CpfValidator;
 
@@ -21,14 +22,20 @@ public class ConsoleController {
     private final UsuarioService usuarioService;
     private final Scanner in = new Scanner(System.in);
 
-    public ConsoleController(UsuarioService usuarioService) {
+    // >>> NOVO CAMPO (UI de Produtos)
+    private final ProdutoConsoleController produtoUI;
+
+    // >>> CONSTRUTOR atualizado: recebe ProdutoService e cria a UI de Produtos
+    public ConsoleController(UsuarioService usuarioService,
+                             ProdutoService produtoService) {
         this.usuarioService = usuarioService;
+        this.produtoUI = new ProdutoConsoleController(produtoService);
     }
 
     public void iniciarConsole() {
         while (true) {
             System.out.println();
-            System.out.println("=== Backoffice (Sprint 1) ===");
+            System.out.println("=== Backoffice (Sprint 2) ===");
             System.out.print("E-mail: ");
             String email = in.nextLine().trim();
             System.out.print("Senha: ");
@@ -56,28 +63,40 @@ public class ConsoleController {
             if (isAdmin(logado)) {
                 System.out.println("1) Listar usuários");
                 System.out.println("2) Incluir usuário");
+                System.out.println("3) Produtos (Admin)");
                 System.out.println("0) Sair");
             } else {
                 System.out.println("1) Listar usuários");
+                System.out.println("2) Produtos (Estoquista)");
                 System.out.println("0) Sair");
             }
             System.out.print("Escolha: ");
 
             int opc = lerIntSeguro();
 
-            switch (opc) {
-                case 1 -> listarUsuarios(logado); 
-                case 2 -> {
-                    if (!isAdmin(logado)) { deny(); break; }
-                    incluirUsuario();
+            if (isAdmin(logado)) {
+                switch (opc) {
+                    case 1 -> listarUsuarios(logado);
+                    case 2 -> incluirUsuario();
+                    case 3 -> produtoUI.menuAdmin(in);      // <<< abre menu de Produtos (Admin)
+                    case 0 -> {
+                        System.out.println("Saindo...");
+                        return;
+                    }
+                    default -> System.out.println("Opção inválida!");
                 }
-                case 0 -> {
-                    System.out.println("Saindo...");
-                    return; 
+            } else {
+                switch (opc) {
+                    case 1 -> listarUsuarios(logado);
+                    case 2 -> produtoUI.menuEstoquista(in); // <<< abre menu de Produtos (Estoquista)
+                    case 0 -> {
+                        System.out.println("Saindo...");
+                        return;
+                    }
+                    default -> System.out.println("Opção inválida!");
                 }
-                default -> System.out.println("Opção inválida!");
             }
-            System.out.println(); 
+            System.out.println();
         }
     }
 
@@ -127,7 +146,7 @@ public class ConsoleController {
                 System.out.println(">> Acesso negado: apenas administradores podem editar.");
                 return;
             }
-            telaEdicaoUsuario(opt.get()); 
+            telaEdicaoUsuario(opt.get());
         } catch (NumberFormatException ex) {
             System.out.println(">> Valor inválido.");
         }
@@ -156,7 +175,7 @@ public class ConsoleController {
                     System.out.println(">> Status atualizado para: " + toggled.getStatus().name().toLowerCase());
                     u = toggled;
                 }
-                case 4 -> { return; } 
+                case 4 -> { return; }
                 default -> System.out.println("Opção inválida!");
             }
             System.out.println();
@@ -325,7 +344,7 @@ public class ConsoleController {
     private String maskCpf(String cpf) {
         if (cpf == null) return "";
         String digits = cpf.replaceAll("\\D", "");
-        if (digits.length() != 11) return cpf; 
+        if (digits.length() != 11) return cpf;
         return String.format("%s.%s.%s-%s",
                 digits.substring(0, 3),
                 digits.substring(3, 6),

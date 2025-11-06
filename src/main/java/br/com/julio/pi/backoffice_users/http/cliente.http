@@ -1,0 +1,110 @@
+@baseUrl = http://localhost:8080
+# usa timestamp pra não colidir e-mails ao repetir os testes
+@email = maria.web@teste.com
+@cpf = 12345678919
+@senha = maria123
+@novaSenha = maria456
+
+###
+# REGISTER — cria um cliente novo
+POST {{baseUrl}}/api/clientes/auth/register
+Content-Type: application/json
+
+{
+  "nomeCompleto": "Maria Silva",
+  "email": "{{email}}",
+  "cpf": "{{cpf}}",
+  "dataNascimento": "1995-05-20",
+  "genero": "FEMININO",
+
+  "senha": "{{senha}}",
+  "confirmaSenha": "{{senha}}",
+
+  "fatCep": "01311000",
+  "fatNumero": "1000",
+  "fatComplemento": "Conj 101",
+
+  "entCep": "04547000",
+  "entNumero": "200",
+  "entComplemento": "Ap 1203"
+}
+
+###
+# LOGIN — guarda a resposta como "login" para reutilizar o token
+# @name login
+POST {{baseUrl}}/api/clientes/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "senha": "{{senha}}"
+}
+
+###
+# ME — dados do cliente logado (usa o token do LOGIN)
+GET {{baseUrl}}/api/clientes/me
+Authorization: Bearer {{login.response.body.token}}
+
+###
+# UPDATE PROFILE — aceita nomeCompleto, dataNascimento, genero
+PUT {{baseUrl}}/api/clientes/me
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nomeCompleto": "Maria S. Silva",
+  "genero": "FEMININO"
+}
+
+###
+# CHANGE PASSWORD — usa a senha atual e define uma nova
+PUT {{baseUrl}}/api/clientes/me/senha
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "senhaAtual": "{{senha}}",
+  "novaSenha": "{{novaSenha}}"
+}
+
+###
+# LOGIN NOVO — autentica com a senha alterada
+# @name login2
+POST {{baseUrl}}/api/clientes/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "senha": "{{novaSenha}}"
+}
+
+###
+# LIST ADDRESSES — usa o token do login2
+GET {{baseUrl}}/api/clientes/enderecos
+Authorization: Bearer {{login2.response.body.token}}
+
+###
+# ADD ADDRESS — EnderecoCreateDTO
+# Campos: tipo (ENTREGA|FATURAMENTO), cep, numero, complemento, padrao (bool)
+# @name addEndereco
+POST {{baseUrl}}/api/clientes/enderecos
+Authorization: Bearer {{login2.response.body.token}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTREGA",
+  "cep": "01001000",
+  "numero": "55",
+  "complemento": "Casa",
+  "padrao": true
+}
+
+###
+# SET DEFAULT (apenas para tipo ENTREGA)
+PATCH {{baseUrl}}/api/clientes/enderecos/{{addEndereco.response.body.id}}/padrao?padrao=true
+Authorization: Bearer {{login2.response.body.token}}
+
+###
+# DELETE ADDRESS — (opcional) remove o endereço recém-criado
+DELETE {{baseUrl}}/api/clientes/enderecos/{{addEndereco.response.body.id}}
+Authorization: Bearer {{login2.response.body.token}}

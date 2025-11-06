@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    @media (max-width: 1000px){ .grid{grid-template-columns:1fr} }
+    .card h2{margin:0 0 8px;font-weight:900}
+    .muted{color:#64748b}
+    .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .radio{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .tag{background:#e2e8f0;border-radius:999px;padding:2px 8px;font-size:.8rem}
+    .hidden{display:none!important}
+    .end-item{border:1px solid #e5e7eb;border-radius:8px;padding:8px;margin:8px 0;display:flex;justify-content:space-between;gap:8px}
+    .end-item.sel{outline:2px solid #1d81b6}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Checkout</h1>
+    <div id="msg" class="alert hidden"></div>
+
+    <div class="grid">
+      <!-- ESQUERDA -->
+      <section class="left">
+        <!-- Itens -->
+        <div class="card">
+          <h2>Itens</h2>
+          <div id="itensBox" class="muted">Carregando…</div>
+        </div>
+
+        <!-- Frete (CEP + modalidades) -->
+        <div class="card" id="blocoFrete">
+          <h2>Entrega e frete</h2>
+          <div class="inline">
+            <input class="input" id="cep" placeholder="Digite seu CEP (8 dígitos)" style="max-width:220px"/>
+            <button class="btn" id="btnCalcFrete" type="button">Calcular frete</button>
+            <span class="muted" id="cepHint"></span>
+          </div>
+          <div id="freteOpcoes" class="mt-12"></div>
+        </div>
+
+        <!-- Endereço de entrega -->
+        <div class="card">
+          <h2>Endereço de entrega</h2>
+          <div class="muted">Escolha um dos seus endereços salvos.</div>
+          <div id="enderecosBox" class="mt-8 muted">Carregando…</div>
+        </div>
+
+        <!-- Pagamento -->
+        <div class="card">
+          <h2>Pagamento</h2>
+          <label class="radio"><input type="radio" name="pay" value="BOLETO"> Boleto bancário</label>
+          <label class="radio"><input type="radio" name="pay" value="CARTAO"> Cartão de crédito</label>
+
+          <!-- Form de cartão (mostra/oculta) -->
+          <div id="cardForm" class="mt-12 hidden">
+            <div class="row2">
+              <div>
+                <label>Nome impresso no cartão</label>
+                <input class="input" id="cc_nome" autocomplete="cc-name"/>
+              </div>
+              <div>
+                <label>Número do cartão</label>
+                <input class="input" id="cc_num" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="•••• •••• •••• ••••"/>
+              </div>
+            </div>
+            <div class="row3 mt-12">
+              <div>
+                <label>Validade (MM/AA)</label>
+                <input class="input" id="cc_exp" inputmode="numeric" maxlength="5" placeholder="MM/AA" autocomplete="cc-exp"/>
+              </div>
+              <div>
+                <label>CVV</label>
+                <input class="input" id="cc_cvv" inputmode="numeric" maxlength="4" placeholder="***" autocomplete="cc-csc"/>
+              </div>
+              <div>
+                <label>Parcelas</label>
+                <select class="input" id="cc_parc">
+                  <option value="">Selecione…</option>
+                  <option value="1">1x sem juros</option>
+                  <option value="2">2x sem juros</option>
+                  <option value="3">3x sem juros</option>
+                  <option value="4">4x sem juros</option>
+                  <option value="5">5x sem juros</option>
+                  <option value="6">6x sem juros</option>
+                  <option value="7">7x</option>
+                  <option value="8">8x</option>
+                  <option value="9">9x</option>
+                  <option value="10">10x</option>
+                  <option value="11">11x</option>
+                  <option value="12">12x</option>
+                </select>
+              </div>
+            </div>
+            <div class="muted mt-12">* Os dados do cartão são usados apenas para simulação; números passam por validação de formato/Luhn.</div>
+          </div>
+        </div>
+
+        <div class="inline mt-12">
+          <a class="btn btn-secondary" href="/index.html">Voltar à loja</a>
+          <button class="btn btn-green" id="btnPagar" type="button">Pagar e finalizar</button>
+        </div>
+      </section>
+
+      <!-- DIREITA -->
+      <aside class="card">
+        <h2>Resumo</h2>
+        <div id="resumoBox" class="muted">Carregando…</div>
+        <hr class="mt-12"/>
+        <div class="muted">Regras: acima de R$ 250,00 frete grátis <span class="tag">promo</span></div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const msg = $("#msg");
+    function ok(t){ msg.textContent=t; msg.className="alert success"; msg.classList.remove("hidden"); }
+    function err(t){ msg.textContent=t; msg.className="alert error";   msg.classList.remove("hidden"); }
+    function hide(){ msg.classList.add("hidden"); }
+
+    // ------- máscaras e validações simples
+    const num = $("#cc_num"), exp = $("#cc_exp"), cvv=$("#cc_cvv");
+    num?.addEventListener("input", ()=>{ let v=num.value.replace(/\D/g,"").slice(0,16); num.value = v.replace(/(\d{4})(?=\d)/g,"$1 "); });
+    exp?.addEventListener("input", ()=>{ let v = exp.value.replace(/\D/g,"").slice(0,4); if(v.length>=3) v = v.slice(0,2)+"/"+v.slice(2); exp.value = v; });
+    cvv?.addEventListener("input", ()=>{ cvv.value = cvv.value.replace(/\D/g,"").slice(0,4); });
+    function luhnOk(n){
+      const a = (n||"").replace(/\s/g,""); if(a.length<13) return false;
+      let s=0, dbl=false; for(let i=a.length-1;i>=0;i--){ let d=+a[i]; if(dbl){ d*=2; if(d>9) d-=9; } s+=d; dbl=!dbl; } return s%10===0;
+    }
+
+    // ------- estado do checkout
+    let carrinho = null;
+    let enderecoSel = null;
+    let formaSel = (new URLSearchParams(location.search).get('forma')||'').toUpperCase() || null;
+
+    // ------- carregar carrinho + resumo
+    async function loadCarrinho(){
+      const r = await fetch('/api/carrinho');
+      carrinho = await r.json();
+
+      // Itens
+      $("#itensBox").innerHTML = (carrinho.itens||[]).length
+        ? `<table class="tabela">
+            <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th></tr></thead>
+            <tbody>
+              ${carrinho.itens.map(i=>`
+                <tr>
+                  <td>${i.nome}</td>
+                  <td>R$ ${Number(i.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                  <td>${i.quantidade}</td>
+                  <td>R$ ${Number(i.preco*i.quantidade).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`
+        : `<div class="muted">Seu carrinho está vazio.</div>`;
+
+      // Resumo
+      const freteStr = carrinho.modalidadeFrete ? `Frete (${carrinho.modalidadeFrete})` : 'Frete';
+      $("#resumoBox").innerHTML = `
+        <div class="muted">Subtotal: R$ ${Number(carrinho.subtotal||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div class="muted">${freteStr}: R$ ${Number(carrinho.frete||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div><strong>Total: R$ ${Number(carrinho.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+      `;
+
+      if(carrinho.enderecoEntregaId) enderecoSel = carrinho.enderecoEntregaId;
+    }
+
+    // ------- frete
+    $("#btnCalcFrete").addEventListener('click', calcFrete);
+    async function calcFrete(){
+      hide();
+      const cep = ($("#cep").value||'').replace(/\D/g,'');
+      if(cep.length!==8){ err('CEP deve ter 8 dígitos.'); return; }
+      const r = await fetch(`/api/frete/opcoes?cep=${cep}`, {method:'POST'});
+      if(!r.ok){ err('Não foi possível calcular frete.'); return; }
+      const opcoes = await r.json();
+      $("#cepHint").textContent = `CEP ${cep}`;
+      $("#freteOpcoes").innerHTML = `
+        <div class="muted">Escolha uma modalidade:</div>
+        ${opcoes.map(o=>`
+         <label class="radio">
+           <input type="radio" name="freteOpt" value="${o.nome}|${o.valor}">
+           ${o.nome} — R$ ${Number(o.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})} (${o.prazo})
+         </label>`).join('')}
+        <div class="mt-12"><button class="btn" id="btnAplicarFrete" type="button">Aplicar frete</button></div>
+      `;
+      $("#btnAplicarFrete").addEventListener('click', aplicarFrete);
+    }
+    async function aplicarFrete(){
+      const chk = document.querySelector('input[name="freteOpt"]:checked');
+      if(!chk){ err('Selecione uma modalidade de frete.'); return; }
+      const [modalidade, valor] = chk.value.split('|');
+      const r = await fetch(`/api/carrinho/frete?modalidade=${encodeURIComponent(modalidade)}&valor=${valor}`, {method:'POST'});
+      if(!r.ok){ err('Falha ao aplicar frete.'); return; }
+      await loadCarrinho();
+      ok('Frete aplicado!');
+    }
+
+    // ------- endereços
+    async function loadEnderecos(){
+      if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+        $("#enderecosBox").innerHTML = `<div class="muted">Entre na sua conta para escolher endereços.</div>`;
+        return;
+      }
+      const r = await ClienteAuth.apiFetch('/api/clientes/enderecos');
+      if(!r.ok){ $("#enderecosBox").innerHTML = `<div class="muted">Não foi possível carregar seus endereços.</div>`; return; }
+      const lista = await r.json();
+      if(!lista.length){
+        $("#enderecosBox").innerHTML = `<div class="muted">Você ainda não tem endereços. Cadastre em <a href="/cliente-perfil.html">Minha conta</a>.</div>`;
+        return;
+      }
+      $("#enderecosBox").innerHTML = lista.map(e=>`
+        <div class="end-item ${String(e.id)===String(enderecoSel)?'sel':''}" data-id="${e.id}">
+          <div>
+            <div><strong>${e.tipo}</strong> — ${e.logradouro}, ${e.numero}${e.complemento?` - ${e.complemento}`:''}</div>
+            <div class="muted">${e.bairro} • ${e.cidade}/${e.uf} • CEP ${e.cep} ${e.padrao && e.tipo==='ENTREGA' ? `<span class="tag">padrão</span>`:''}</div>
+          </div>
+          <div><button class="btn btn-secondary btn-sm" type="button">Selecionar</button></div>
+        </div>`).join('');
+
+      // listeners seguros
+      [...document.querySelectorAll('.end-item button')].forEach(btn=>{
+        btn.addEventListener('click', async (ev)=>{
+          ev.preventDefault(); // evita qualquer navegação implícita
+          const div = ev.target.closest('.end-item');
+          enderecoSel = div.getAttribute('data-id');
+          [...document.querySelectorAll('.end-item')].forEach(d=>d.classList.remove('sel'));
+          div.classList.add('sel');
+          try{
+            await ClienteAuth.selecionarEnderecoEntrega(enderecoSel); // POST /api/carrinho/entrega?enderecoId=...
+            ok('Endereço de entrega definido.');
+          }catch(e){ err(e.message || 'Falha ao definir endereço.'); }
+        });
+      });
+    }
+
+    // ------- pagamento (mostrar form)
+    function refreshPayUI(){
+      const v = (document.querySelector('input[name="pay"]:checked')?.value)||'';
+      $("#cardForm").classList.toggle('hidden', v!=='CARTAO');
+    }
+    document.querySelectorAll('input[name="pay"]').forEach(r=>{
+      r.addEventListener('change', async (ev)=>{
+        formaSel = ev.target.value;
+        refreshPayUI();
+        hide();
+        try{
+          await ClienteAuth.selecionarFormaPagamento(formaSel);
+        }catch(e){ err(e.message || 'Falha ao selecionar forma de pagamento.'); }
+      });
+    });
+
+    // ------- pagar/finalizar
+    $("#btnPagar").addEventListener('click', async ()=>{
+      hide();
+      await loadCarrinho();
+      if(!(carrinho.itens && carrinho.itens.length)) return err('Seu carrinho está vazio.');
+      if(!carrinho.modalidadeFrete) return err('Escolha e aplique uma modalidade de frete.');
+      if(!enderecoSel) return err('Selecione um endereço de entrega.');
+      const pay = (document.querySelector('input[name="pay"]:checked')||{}).value;
+      if(!pay) return err('Selecione a forma de pagamento.');
+
+      if(pay==='CARTAO'){
+        const nome = ($("#cc_nome").value||'').trim();
+        const numero = ($("#cc_num").value||'').trim();
+        const validade = ($("#cc_exp").value||'').trim();
+        const cvv = ($("#cc_cvv").value||'').trim();
+        const parcelas = $("#cc_parc").value;
+
+        if(!nome) return err('Informe o nome impresso no cartão.');
+        if(!luhnOk(numero)) return err('Número do cartão inválido.');
+        if(!/^\d{2}\/\d{2}$/.test(validade)) return err('Validade deve estar no formato MM/AA.');
+        if(!(cvv && cvv.length>=3)) return err('CVV inválido.');
+        if(!parcelas) return err('Selecione as parcelas.');
+
+        const sel = await ClienteAuth.apiFetch(`/api/carrinho/pagamento?forma=CARTAO&parcelas=${encodeURIComponent(parcelas)}`, {method:'POST'});
+        if(!sel.ok){
+          const e = await sel.json().catch(()=>({detail:'Falha ao selecionar a forma de pagamento'}));
+          return err(e.detail || 'Falha ao selecionar a forma de pagamento');
+        }
+      }else{
+        try{ await ClienteAuth.selecionarFormaPagamento('BOLETO'); }catch(e){}
+      }
+
+      const fin = await fetch('/api/carrinho/finalizar', {method:'POST'});
+      if(!fin.ok){
+        const e = await fin.json().catch(()=>({detail:'Não foi possível finalizar'}));
+        return err(e.detail || 'Não foi possível finalizar');
+      }
+      const recibo = await fin.json().catch(()=>null);
+      ok('Pedido gerado! Redirecionando…');
+      const pid = (recibo && (recibo.pedidoId || recibo.id)) || '';
+      setTimeout(()=>{ location.href = `/cliente-pedido.html?id=${encodeURIComponent(pid)}`; }, 600);
+    });
+
+    // ------- init
+    (async function init(){
+      if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+        const ret = encodeURIComponent(location.pathname + location.search);
+        location.href = '/cliente-login.html?returnUrl='+ret; return;
+      }
+      await loadCarrinho();
+      await loadEnderecos();
+      refreshPayUI();
+
+      // se veio da home com ?forma=...
+      if(formaSel){
+        const el = document.querySelector(`input[name="pay"][value="${formaSel}"]`);
+        if(el){ el.checked = true; refreshPayUI(); }
+      }
+    })();
+  </script>
+</body>
+</html>
