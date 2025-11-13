@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pedido Confirmado</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap { max-width: 820px; margin: 40px auto; padding: 0 20px; }
+    .card { background:#fff; border-radius:12px; padding:28px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .success-icon { font-size:56px; color:#16a34a; margin-bottom:8px; }
+    .error-icon { font-size:56px; color:#dc2626; margin-bottom:8px; }
+    .muted{ color:#64748b }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .row > div { background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:14px; }
+    .label { display:block; font-size:.85rem; color:#64748b; margin-bottom:6px; }
+    .val   { font-weight:800; font-size:1.1rem; }
+    .actions { margin-top: 24px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .center { text-align:center }
+    .muted-italic { color:#64748b; font-style:italic; font-size:.95rem; margin-top:8px }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div id="headerOk" class="center" style="display:none">
+        <div class="success-icon">✔️</div>
+        <h1>Pedido confirmado!</h1>
+        <p class="muted">Recebemos seu pedido e ele já está sendo processado.</p>
+        <div id="savingMsg" class="muted-italic" style="display:none">Gravando pedido...</div>
+      </div>
+
+      <div id="headerErr" class="center" style="display:none">
+        <div class="error-icon">✖️</div>
+        <h1>Não foi possível confirmar</h1>
+        <p class="muted" id="errMsg">Tente novamente em instantes.</p>
+      </div>
+
+      <div id="dados" style="margin-top:16px; display:none">
+        <div class="row">
+          <div>
+            <span class="label">Código do pedido</span>
+            <span id="cod" class="val">—</span>
+          </div>
+          <div>
+            <span class="label">Valor total</span>
+            <span id="total" class="val">—</span>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div>
+            <span class="label">Status</span>
+            <span id="status" class="val">—</span>
+          </div>
+          <div>
+            <span class="label">Criado em</span>
+            <span id="criado" class="val">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/" class="btn">Voltar para a loja</a>
+        <a href="/cliente-pedidos.html" class="btn secondary">Meus pedidos</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script src="/js/cliente-auth.js"></script>
+<script>
+  const params   = new URLSearchParams(location.search);
+  const pedidoId = params.get('id');
+  const codParam = params.get('cod');
+
+  const el = (id)=>document.getElementById(id);
+  const money = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const fmtDate = (iso)=>{ if(!iso) return '—'; const d=new Date(iso); return isNaN(d)? iso : d.toLocaleString('pt-BR'); };
+  const fallbackCodigo = (p)=> `PO-${String(p?.id||p?.pedidoId||0).padStart(6,'0')}`;
+
+  function authHeaders(){
+    const a = (window.ClienteAuth && ClienteAuth.getAuth && ClienteAuth.getAuth()) || null;
+    return a?.token ? { Authorization: 'Bearer '+a.token } : {};
+  }
+
+  async function getPedidoPorId(id){
+    const r = await fetch(`/api/clientes/pedidos/${encodeURIComponent(id)}`, { headers: authHeaders() });
+    if(!r.ok) return null; return r.json();
+  }
+  async function getPedidoPorCodigo(cod){
+    const r = await fetch(`/api/clientes/pedidos/codigo/${encodeURIComponent(cod)}`, { headers: authHeaders() });
+    if(!r.ok) return null; return r.json();
+  }
+
+  async function load(){
+    // precisa estar logado
+    if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+      el('headerErr').style.display = '';
+      el('errMsg').textContent = 'Faça login para visualizar os detalhes do seu pedido.';
+      return;
+    }
+
+    let p = null;
+    if(pedidoId) p = await getPedidoPorId(pedidoId);
+    if(!p && codParam) p = await getPedidoPorCodigo(codParam);
+
+    if(!p){
+      el('headerErr').style.display = '';
+      el('errMsg').textContent = 'Pedido não encontrado.';
+      return;
+    }
+
+    const codigo = p.codigo || fallbackCodigo(p);
+    el('headerOk').style.display = '';
+    document.querySelector('#headerOk h1').textContent = `Confirmado: pedido ${codigo}`;
+    el('dados').style.display = '';
+    el('cod').textContent    = codigo;
+    el('total').textContent  = money(p.total ?? p.valorTotal ?? p.totalPedido);
+    el('status').textContent = p.status || 'RECEBIDO';
+    el('criado').textContent = fmtDate(p.criadoEm || p.dataCriacao || p.createdAt);
+  }
+  load();
+</script>
+
+</body>
+</html>

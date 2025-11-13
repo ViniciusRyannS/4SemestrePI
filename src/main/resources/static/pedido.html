@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detalhe do Pedido</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .container{max-width:1000px;margin:24px auto;padding:0 16px}
+    .muted{color:#64748b}
+    .title{font-weight:900;font-size:1.4rem;margin:0 0 6px}
+    .sub{margin:2px 0 14px}
+    .tag{display:inline-block;background:#e5e7eb;border-radius:999px;padding:4px 10px;font-size:.85rem;margin-top:4px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width:800px){ .grid{grid-template-columns:1fr} }
+    .card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:16px}
+    .tabela{width:100%;border-collapse:collapse}
+    .tabela th,.tabela td{border:1px solid #e5e7eb;padding:10px;text-align:left}
+    .tabela th{background:#f9fafb;font-weight:800}
+    .mt-8{margin-top:8px} .mt-12{margin-top:12px} .mt-16{margin-top:16px}
+    .btn{background:#1d81b6;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .btn-outline{background:#fff;color:#1d81b6;border:2px solid #1d81b6}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .alert{padding:10px 12px;border-radius:8px}
+    .error{background:#fde8e8;border:1px solid #e57373}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="actions">
+      <a class="btn-outline" href="/meus-pedidos.html">&larr; Meus pedidos</a>
+      <a class="btn-outline" href="/index.html">Voltar à loja</a>
+    </div>
+
+    <div id="box" class="mt-16 card">
+      <div class="muted">Carregando...</div>
+    </div>
+  </main>
+
+  <!-- auth do cliente -->
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+  (async function load(){
+    // pede login
+    try{
+      if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+        const ret = encodeURIComponent(location.pathname + location.search);
+        location.href = '/cliente-login.html?returnUrl=' + ret;
+        return;
+      }
+    }catch(e){
+      const ret = encodeURIComponent(location.pathname + location.search);
+      location.href = '/cliente-login.html?returnUrl=' + ret;
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const box = document.getElementById('box');
+
+    if(!id){
+      box.innerHTML = '<div class="alert error">ID do pedido não informado.</div>';
+      return;
+    }
+
+    try{
+      const res = await ClienteAuth.apiFetch('/api/clientes/pedidos/'+encodeURIComponent(id));
+      if(!res.ok){
+        box.innerHTML = '<div class="alert error">Pedido não encontrado ou você não tem permissão.</div>';
+        return;
+      }
+      const p = await res.json();
+
+      const itensHTML = (p.itens||[]).map(i => `
+        <tr>
+          <td>${i.nome}</td>
+          <td>R$ ${Number(i.preco).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+          <td>${i.quantidade}</td>
+          <td>R$ ${Number(i.totalLinha).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        </tr>
+      `).join('');
+
+      const enderecoHTML = `
+        <div>${p.endLogradouro}, ${p.endNumero} ${p.endComplemento?'- '+p.endComplemento:''}</div>
+        <div>${p.endBairro} — ${p.endCidade}/${p.endUf} • CEP ${p.endCep}</div>
+      `;
+
+      const resumoHTML = `
+        <div class="muted">Subtotal: R$ ${Number(p.subtotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div class="muted">Frete (${p.modalidadeFrete||'-'}): R$ ${Number(p.frete).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div class="mt-8"><strong>Total: R$ ${Number(p.total).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+      `;
+
+      const pagamentoHTML = `
+        <div>Forma: <strong>${p.formaPagamento || '-'}</strong></div>
+        ${p.formaPagamento === 'CARTAO' && p.parcelas ? `<div>${p.parcelas}x</div>`:''}
+        ${p.linhaDigitavel ? `<div class="mt-8"><small class="muted">Boleto:</small><br>${p.linhaDigitavel}</div>`:''}
+      `;
+
+      box.innerHTML = `
+        <div class="title">Pedido #${p.id}</div>
+        <div class="sub muted">${new Date(p.criadoEm).toLocaleString('pt-BR')}</div>
+        <span class="tag">${p.status}</span>
+
+        <div class="grid mt-16">
+          <section class="card">
+            <h3 class="title" style="font-size:1.05rem">Itens</h3>
+            <table class="tabela mt-8">
+              <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th></tr></thead>
+              <tbody>${itensHTML || `<tr><td colspan="4" class="muted">Nenhum item.</td></tr>`}</tbody>
+            </table>
+          </section>
+
+          <section class="card">
+            <h3 class="title" style="font-size:1.05rem">Entrega</h3>
+            <div class="mt-8">${enderecoHTML}</div>
+
+            <h3 class="title mt-16" style="font-size:1.05rem">Pagamento</h3>
+            <div class="mt-8">${pagamentoHTML}</div>
+
+            <h3 class="title mt-16" style="font-size:1.05rem">Resumo</h3>
+            <div class="mt-8">${resumoHTML}</div>
+
+            ${p.status==='AGUARDANDO_PAGAMENTO' ? `
+              <div class="alert mt-16">Aguardando pagamento. Se escolheu boleto, pague para liberar o pedido.</div>
+            ` : ``}
+          </section>
+        </div>
+      `;
+    }catch(err){
+      document.getElementById('box').innerHTML =
+        '<div class="alert error">Falha ao carregar o pedido. Tente novamente.</div>';
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sua Loja • Entrar / Registrar</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:900px;margin:24px auto;padding:0 12px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-weight:600;margin-top:8px;display:block}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px}
+    .tabs{display:flex;gap:8px;margin:12px 0}
+    .tab{padding:8px 12px;border:1px solid #cbd5e1;border-radius:999px;cursor:pointer}
+    .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+    .hidden{display:none}
+    .alert{margin:10px 0;padding:10px;border-radius:8px}
+    .alert.success{background:#e6ffed;color:#065f46}
+    .alert.error{background:#ffe8e8;color:#991b1b}
+    .link{color:#1d4ed8;cursor:pointer;text-decoration:underline}
+
+    .invalid{border-color:#ef4444; outline: none}
+    .hint{font-size:.875rem;color:#6b7280;margin-top:4px}
+  </style>
+</head>
+<body>
+
+  <header class="gs-header">
+    <div class="gs-header__left">
+      <a href="/"><img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'"></a>
+    </div>
+    <div class="gs-header__center">
+      <div class="gs-search">
+        <input type="text" placeholder="Encontre o suplemento ideal para você"/>
+        <button class="gs-search__btn" type="button">🔍</button>
+      </div>
+    </div>
+    <div class="gs-header__right">
+      <a class="gs-link" href="/">🏠<span>Home</span></a>
+
+      <a class="gs-link" href="/login.html">🔑<span>Admin/Staff</span></a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h2>Minha conta</h2>
+
+    <div id="msg" class="alert hidden"></div>
+
+    <div class="tabs">
+      <button id="tabLogin" class="tab active">Entrar</button>
+      <button id="tabReg" class="tab">Criar conta</button>
+    </div>
+
+    <section id="viewLogin" class="card">
+      <form id="formLogin">
+        <label>E-mail</label>
+        <input id="loginEmail" type="email" required />
+
+        <div id="loginPwdBlock">
+          <label>Senha</label>
+          <input id="loginSenha" type="password" required />
+          <div style="margin-top:6px">
+            <span id="linkForgot" class="link">Esqueci minha senha</span>
+          </div>
+        </div>
+
+        <div id="forgotBlock" class="hidden" style="margin-top:12px">
+          <div class="alert">Informe sua senha atual e defina a nova senha.</div>
+          <label>Senha atual</label>
+          <input id="senhaAtual" type="password" />
+          <label>Nova senha</label>
+          <input id="novaSenha" type="password" />
+          <div style="margin-top:6px"><span id="linkBackLogin" class="link">Voltar para login</span></div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" type="submit">Entrar</button>
+          <a class="btn btn-secondary" href="/">Cancelar</a>
+        </div>
+      </form>
+    </section>
+
+
+    <section id="viewReg" class="card hidden">
+      <form id="formReg" novalidate>
+        <div class="row">
+          <div>
+
+            <div id="regNomeError" class="alert error hidden"></div>
+            <label>Nome completo</label>
+            <input id="regNome" required />
+            <div class="hint">Digite nome e sobrenome (cada um com 3+ letras).</div>
+          </div>
+          <div>
+            <label>E-mail</label>
+            <input id="regEmail" type="email" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>CPF</label>
+            <input id="regCpf" maxlength="14" required placeholder="somente números"/>
+          </div>
+          <div>
+            <label>Data de nascimento</label>
+            <input id="regNasc" type="date" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Gênero</label>
+            <select id="regGenero">
+              <option value="">—</option>
+              <option value="FEMININO">Feminino</option>
+              <option value="MASCULINO">Masculino</option>
+              <option value="OUTRO">Outro</option>
+              <option value="NAO_INFORMAR">Prefiro não informar</option>
+            </select>
+          </div>
+          <div>
+            <label>Senha</label>
+            <input id="regSenha" type="password" required minlength="6"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Confirme a senha</label>
+            <input id="regConf" type="password" required minlength="6"/>
+          </div>
+          <div>
+            <label>CEP (faturamento)</label>
+            <input id="regFatCep" placeholder="00000-000" maxlength="9" required/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Número (faturamento)</label>
+            <input id="regFatNum" required/>
+          </div>
+          <div>
+            <label>Complemento (faturamento)</label>
+            <input id="regFatComp"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>CEP (entrega)</label>
+            <input id="regEntCep" placeholder="00000-000" maxlength="9"/>
+          </div>
+          <div>
+            <label>Número (entrega)</label>
+            <input id="regEntNum"/>
+          </div>
+        </div>
+
+        <div>
+          <label>Complemento (entrega)</label>
+          <input id="regEntComp"/>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnRegSubmit" class="btn" type="submit">Criar conta</button>
+          <button class="btn btn-secondary" type="button" id="btnRegCancel">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+    const msg = document.getElementById('msg');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabReg   = document.getElementById('tabReg');
+    const viewLogin= document.getElementById('viewLogin');
+    const viewReg  = document.getElementById('viewReg');
+
+    const formLogin = document.getElementById('formLogin');
+    const loginEmail= document.getElementById('loginEmail');
+    const loginSenha= document.getElementById('loginSenha');
+
+    const linkForgot    = document.getElementById('linkForgot');
+    const linkBackLogin = document.getElementById('linkBackLogin');
+    const forgotBlock   = document.getElementById('forgotBlock');
+    const loginPwdBlock = document.getElementById('loginPwdBlock');
+    const senhaAtualEl  = document.getElementById('senhaAtual');
+    const novaSenhaEl   = document.getElementById('novaSenha');
+
+    const formReg   = document.getElementById('formReg');
+    const btnRegCancel = document.getElementById('btnRegCancel');
+
+    const regNome = document.getElementById('regNome');
+    const regNomeError = document.getElementById('regNomeError');
+    const btnRegSubmit = document.getElementById('btnRegSubmit');
+
+    function showMsg(text, type='success'){
+      msg.textContent = text;
+      msg.className = `alert ${type==='success'?'success':'error'}`;
+      msg.classList.remove('hidden');
+      setTimeout(()=>msg.classList.add('hidden'), 4000);
+    }
+    function selTab(which){
+      [tabLogin,tabReg].forEach(b=>b.classList.remove('active'));
+      [viewLogin,viewReg].forEach(v=>v.classList.add('hidden'));
+      if(which==='login'){
+        tabLogin.classList.add('active'); viewLogin.classList.remove('hidden');
+      }else{
+        tabReg.classList.add('active'); viewReg.classList.remove('hidden');
+      }
+    }
+
+    tabLogin.onclick = ()=> selTab('login');
+    tabReg.onclick   = ()=> selTab('reg');
+
+    // validacao de nome que o leonildo pediu com 3 letras
+    const LETTER_RE = /[A-Za-zÀ-ÖØ-öø-ÿ]/g;
+
+    function validarNomeCompleto(valor){
+      const raw = (valor||'').trim();
+      if(!raw) return {ok:false, msg:'Informe seu nome e sobrenome (cada um com 3+ letras).'};
+
+     
+      const partes = raw.split(/\s+/).filter(Boolean);
+      if(partes.length < 2){
+        return {ok:false, msg:'Digite pelo menos nome e sobrenome.'};
+      }
+  
+      for(const p of partes){
+        const letters = (p.match(LETTER_RE)||[]).length;
+        if(letters < 3){
+          return {ok:false, msg:'Cada palavra do nome precisa ter ao menos 3 letras.'};
+        }
+      }
+      return {ok:true, msg:''};
+    }
+
+    function mostrarErroNome(msgText){
+      if(msgText){
+        regNomeError.textContent = msgText;
+        regNomeError.classList.remove('hidden');
+        regNome.classList.add('invalid');
+      }else{
+        regNomeError.textContent = '';
+        regNomeError.classList.add('hidden');
+        regNome.classList.remove('invalid');
+      }
+    }
+
+    regNome.addEventListener('blur', ()=>{
+      const {ok, msg} = validarNomeCompleto(regNome.value);
+      mostrarErroNome(ok ? '' : msg);
+    });
+    regNome.addEventListener('input', ()=>{
+      const {ok, msg} = validarNomeCompleto(regNome.value);
+      mostrarErroNome(ok ? '' : msg);
+    });
+
+
+    linkForgot.onclick = ()=>{
+      loginPwdBlock.classList.add('hidden');
+      forgotBlock.classList.remove('hidden');
+    };
+    linkBackLogin.onclick = ()=>{
+      forgotBlock.classList.add('hidden');
+      loginPwdBlock.classList.remove('hidden');
+    };
+
+    formLogin.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      try{
+        if(!forgotBlock.classList.contains('hidden')){
+          const email = loginEmail.value.trim();
+          const senhaAtual = senhaAtualEl.value;
+          const novaSenha  = novaSenhaEl.value;
+          if(!email || !senhaAtual || !novaSenha) throw new Error('Preencha os campos');
+          await ClienteAuth.login(email, senhaAtual);
+          await ClienteAuth.changePassword(senhaAtual, novaSenha);
+          showMsg('Senha alterada! Entre novamente com a nova senha.');
+          ClienteAuth.logout();
+          forgotBlock.classList.add('hidden');
+          loginPwdBlock.classList.remove('hidden');
+          loginSenha.value = '';
+          return;
+        }
+
+        const email = loginEmail.value.trim();
+        const senha = loginSenha.value;
+        await ClienteAuth.login(email, senha);
+
+        const url = new URL(window.location.href);
+        const ret = url.searchParams.get('returnUrl') || '/';
+        showMsg('Login realizado com sucesso!');
+        window.location.href = ret;
+      }catch(err){
+        showMsg(err.message || 'Falha no login', 'error');
+      }
+    });
+
+    // registrando
+    formReg.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      // validacao do nome antes de envio
+      const nomeCheck = validarNomeCompleto(document.getElementById('regNome').value);
+      if(!nomeCheck.ok){
+        mostrarErroNome(nomeCheck.msg);
+        regNome.focus();
+        return; // bloqueia envio
+      }
+
+      try{
+        const payload = {
+          nomeCompleto: document.getElementById('regNome').value.trim(),
+          email:        document.getElementById('regEmail').value.trim(),
+          cpf:          (document.getElementById('regCpf').value||'').replace(/\D/g,''),
+          dataNascimento: document.getElementById('regNasc').value || null,
+          genero:       document.getElementById('regGenero').value || null,
+          senha:        document.getElementById('regSenha').value,
+          confirmaSenha:document.getElementById('regConf').value,
+          fatCep:       (document.getElementById('regFatCep').value||'').replace(/\D/g,''),
+          fatNumero:    document.getElementById('regFatNum').value,
+          fatComplemento: document.getElementById('regFatComp').value,
+          entCep:       (document.getElementById('regEntCep').value||'').replace(/\D/g,'') || null,
+          entNumero:    document.getElementById('regEntNum').value || null,
+          entComplemento: document.getElementById('regEntComp').value || null
+        };
+
+        if(payload.senha !== payload.confirmaSenha){
+          showMsg('As senhas não conferem', 'error');
+          return;
+        }
+
+        await ClienteAuth.register(payload);
+        showMsg('Conta criada! Faça login para continuar.');
+        selTab('login');
+        document.getElementById('loginEmail').value = payload.email;
+        document.getElementById('loginSenha').focus();
+      }catch(err){
+        showMsg(err.message || 'Falha no cadastro', 'error');
+      }
+    });
+
+    btnRegCancel.onclick = ()=> selTab('login');
+
+    (function autoRedirectIfLogged(){
+      if(ClienteAuth.isLogged()){
+        window.location.href = '/cliente-perfil.html';
+      }
+    })();
+  </script>
+</body>
+</html>
