@@ -1,0 +1,88 @@
+@baseUrl = http://localhost:8080
+@email = maria.web@teste.com
+@cpf = 12345678919
+@senha = maria123
+@novaSenha = maria456
+
+POST {{baseUrl}}/api/clientes/auth/register
+Content-Type: application/json
+
+{
+  "nomeCompleto": "Maria Silva",
+  "email": "{{email}}",
+  "cpf": "{{cpf}}",
+  "dataNascimento": "1995-05-20",
+  "genero": "FEMININO",
+
+  "senha": "{{senha}}",
+  "confirmaSenha": "{{senha}}",
+
+  "fatCep": "01311000",
+  "fatNumero": "1000",
+  "fatComplemento": "Conj 101",
+
+  "entCep": "04547000",
+  "entNumero": "200",
+  "entComplemento": "Ap 1203"
+}
+
+# @name login
+POST {{baseUrl}}/api/clientes/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "senha": "{{senha}}"
+}
+
+GET {{baseUrl}}/api/clientes/me
+Authorization: Bearer {{login.response.body.token}}
+
+PUT {{baseUrl}}/api/clientes/me
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "nomeCompleto": "Maria S. Silva",
+  "genero": "FEMININO"
+}
+
+PUT {{baseUrl}}/api/clientes/me/senha
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "senhaAtual": "{{senha}}",
+  "novaSenha": "{{novaSenha}}"
+}
+
+# @name login2
+POST {{baseUrl}}/api/clientes/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "senha": "{{novaSenha}}"
+}
+
+GET {{baseUrl}}/api/clientes/enderecos
+Authorization: Bearer {{login2.response.body.token}}
+
+# @name addEndereco
+POST {{baseUrl}}/api/clientes/enderecos
+Authorization: Bearer {{login2.response.body.token}}
+Content-Type: application/json
+
+{
+  "tipo": "ENTREGA",
+  "cep": "01001000",
+  "numero": "55",
+  "complemento": "Casa",
+  "padrao": true
+}
+
+PATCH {{baseUrl}}/api/clientes/enderecos/{{addEndereco.response.body.id}}/padrao?padrao=true
+Authorization: Bearer {{login2.response.body.token}}
+
+DELETE {{baseUrl}}/api/clientes/enderecos/{{addEndereco.response.body.id}}
+Authorization: Bearer {{login2.response.body.token}}

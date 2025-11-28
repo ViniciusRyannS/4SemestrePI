@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Detalhe do pedido</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .muted{ color:#64748b }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    @media (max-width:640px){ .grid2{ grid-template-columns:1fr } }
+    table.tabela { width:100%; border-collapse:collapse; margin-top:12px }
+    table.tabela th, table.tabela td { padding:8px; border-bottom:1px solid #e5e7eb; text-align:left }
+    table.tabela th { font-weight:800 }
+  </style>
+</head>
+<body class="container">
+  <a class="btn btn-secondary" href="/cliente-pedidos.html">← voltar</a>
+  <div id="box" class="mt-12"></div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+  async function load(){
+    if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+      location.href='/cliente-login.html?returnUrl='+encodeURIComponent(location.pathname+location.search); return;
+    }
+
+    const id = new URLSearchParams(location.search).get('id');
+    if(!id){
+      document.getElementById('box').innerHTML =
+        '<div class="alert error">Pedido não informado.</div>';
+      return;
+    }
+
+    const r = await ClienteAuth.apiFetch(`/api/clientes/pedidos/${encodeURIComponent(id)}`);
+    if(!r.ok){
+      const txt = await r.text().catch(()=> 'Não foi possível carregar o pedido.');
+      document.getElementById('box').innerHTML = `<div class="alert error">${txt}</div>`;
+      return;
+    }
+    const p = await r.json();
+
+    const codigo = p.codigo || ('PO-'+String(p.id).padStart(6,'0'));
+    const criado = p.criadoEm ? new Date(p.criadoEm).toLocaleString('pt-BR') : '';
+    const total  = Number(p.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    const subtotal = Number(p.subtotal||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    const frete = Number(p.frete||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+    const entrega = [
+      p.endLogradouro, p.endNumero, (p.endComplemento ? ` - ${p.endComplemento}` : '')
+    ].filter(Boolean).join('');
+    const cidade = (p.endCidade && p.endUf) ? `${p.endCidade}/${p.endUf}` : '';
+    const cep    = p.endCep ? ` • CEP ${p.endCep}` : '';
+
+    const itens = Array.isArray(p.itens) ? p.itens : [];
+
+    document.getElementById('box').innerHTML = `
+      <div class="card">
+        <div class="titulo">Pedido ${codigo} — <span class="tag">${p.status||'RECEBIDO'}</span></div>
+        <div class="muted">${criado}</div>
+
+        <div class="grid2 mt-12">
+          <div>
+            <div class="muted">Entrega</div>
+            <div><strong>${entrega}</strong></div>
+            <div class="muted">${cidade}${cep}</div>
+            <div class="muted mt-8">Frete: ${p.modalidadeFrete || '—'}</div>
+            <div class="muted">Pagamento: ${p.formaPagamento || '—'}</div>
+          </div>
+          <div>
+            <div class="muted">Resumo</div>
+            <div>Subtotal: <strong>R$ ${subtotal}</strong></div>
+            <div>Frete: <strong>R$ ${frete}</strong></div>
+            <div>Total: <strong>R$ ${total}</strong></div>
+          </div>
+        </div>
+
+        <h3 class="mt-16">Itens</h3>
+        ${itens.length ? `
+          <table class="tabela">
+            <thead><tr><th>Produto</th><th>Preço</th><th>Qtd</th><th>Total</th></tr></thead>
+            <tbody>
+              ${itens.map(i => `
+                <tr>
+                  <td>${i.nome}</td>
+                  <td>R$ ${Number(i.preco||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                  <td>${i.quantidade}</td>
+                  <td>R$ ${Number(i.totalLinha||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : `<div class="muted">Sem itens para exibir.</div>`}
+      </div>
+    `;
+  }
+  load();
+  </script>
+</body>
+</html>

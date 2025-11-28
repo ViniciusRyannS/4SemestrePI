@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pagamento com Cartão</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    @media (max-width: 960px){ .grid{grid-template-columns:1fr} }
+    .card h2{margin:0 0 8px;font-weight:900}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .muted{color:#64748b}
+    .inline{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{background:#e2e8f0;border-radius:999px;padding:2px 8px;font-size:.8rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Pagamento</h1>
+    <div class="muted">Forma selecionada: <span class="badge">Cartão de crédito</span></div>
+
+    <div class="grid">
+      <!-- formulario de cartao -->
+      <section class="card">
+        <h2>Dados do cartão</h2>
+        <div id="msg" class="alert hidden"></div>
+        <form id="formCartao" novalidate>
+          <label>Nome impresso no cartão</label>
+          <input class="input" id="nome" autocomplete="cc-name" required/>
+
+          <label class="mt-12">Número do cartão</label>
+          <input class="input" id="numero" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="•••• •••• •••• ••••" required/>
+
+          <div class="row mt-12">
+            <div>
+              <label>Validade (MM/AA)</label>
+              <input class="input" id="validade" inputmode="numeric" maxlength="5" placeholder="MM/AA" autocomplete="cc-exp" required/>
+            </div>
+            <div>
+              <label>CVV</label>
+              <input class="input" id="cvv" inputmode="numeric" maxlength="4" placeholder="***" autocomplete="cc-csc" required/>
+            </div>
+          </div>
+
+          <div class="row mt-12">
+            <div>
+              <label>Parcelas</label>
+              <select class="input" id="parcelas" required>
+                <option value="">Selecione…</option>
+                <option value="1">1x sem juros</option>
+                <option value="2">2x sem juros</option>
+                <option value="3">3x sem juros</option>
+                <option value="4">4x sem juros</option>
+                <option value="5">5x sem juros</option>
+                <option value="6">6x sem juros</option>
+                <option value="7">7x</option>
+                <option value="8">8x</option>
+                <option value="9">9x</option>
+                <option value="10">10x</option>
+                <option value="11">11x</option>
+                <option value="12">12x</option>
+              </select>
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn btn-green" type="submit" style="width:100%">Pagar e finalizar</button>
+            </div>
+          </div>
+
+          <div class="mt-12 inline">
+            <a class="btn btn-secondary" href="/index.html">Voltar à loja</a>
+            <a class="btn btn-outline" href="/cliente-perfil.html">Minha conta</a>
+          </div>
+        </form>
+      </section>
+
+      <!-- RESUMO DO PEDIDO -->
+      <aside class="card">
+        <h2>Resumo</h2>
+        <div id="resumo">
+          <div class="muted">Carregando…</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const msg = $("#msg");
+    function showError(t){ msg.textContent=t; msg.className="alert error"; msg.classList.remove("hidden"); }
+    function showOk(t){ msg.textContent=t; msg.className="alert success"; msg.classList.remove("hidden"); }
+    function hideMsg(){ msg.classList.add("hidden"); }
+
+    const num = $("#numero"), val = $("#validade"), cvv=$("#cvv");
+    num.addEventListener("input", ()=>{ let v=num.value.replace(/\D/g,"").slice(0,16); num.value = v.replace(/(\d{4})(?=\d)/g,"$1 "); });
+    val.addEventListener("input", ()=>{
+      let v = val.value.replace(/\D/g,"").slice(0,4);
+      if(v.length>=3) v = v.slice(0,2)+"/"+v.slice(2);
+      val.value = v;
+    });
+    cvv.addEventListener("input", ()=>{ cvv.value = cvv.value.replace(/\D/g,"").slice(0,4); });
+
+    function luhnOk(n){
+      const a = n.replace(/\s/g,"");
+      if(a.length<13) return false;
+      let s=0, dbl=false;
+      for(let i=a.length-1;i>=0;i--){
+        let d = parseInt(a[i],10);
+        if(dbl){ d*=2; if(d>9) d-=9; }
+        s+=d; dbl=!dbl;
+      }
+      return s%10===0;
+    }
+
+    async function carregarResumo(){
+      const r = await fetch('/api/carrinho');
+      const c = await r.json();
+      const linhas = (c.itens||[]).map(i => `
+        <div>${i.quantidade}× ${i.nome} — R$ ${Number(i.preco*i.quantidade).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      `).join('');
+      $("#resumo").innerHTML = `
+        ${linhas || '<div class="muted">Seu carrinho está vazio.</div>'}
+        <hr/>
+        <div class="muted">Frete (${c.modalidadeFrete||'-'}): R$ ${Number(c.frete||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div class="muted">Subtotal: R$ ${Number(c.subtotal||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div><strong>Total: R$ ${Number(c.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+      `;
+      if(!(c.itens && c.itens.length)) { showError('Seu carrinho está vazio.'); }
+      else if(!c.enderecoEntregaId){ showError('Selecione um endereço de entrega antes do pagamento.'); }
+      else if(!c.modalidadeFrete){ showError('Escolha e aplique uma modalidade de frete antes do pagamento.'); }
+    }
+
+    (async function init(){
+      if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+        const ret = encodeURIComponent(location.pathname + location.search);
+        location.href = '/cliente-login.html?returnUrl='+ret; return;
+      }
+      try{
+        await ClienteAuth.selecionarFormaPagamento('CARTAO');
+      }catch(e){
+      }
+      carregarResumo();
+    })();
+
+    $("#formCartao").addEventListener("submit", async (ev)=>{
+      ev.preventDefault(); hideMsg();
+
+      const nome = $("#nome").value.trim();
+      const numero = $("#numero").value.trim();
+      const validade = $("#validade").value.trim();
+      const parcelas = $("#parcelas").value;
+      const cvvVal = $("#cvv").value.trim();
+
+      if(!nome) return showError("Informe o nome impresso no cartão.");
+      if(!luhnOk(numero)) return showError("Número de cartão inválido.");
+      if(!/^\d{2}\/\d{2}$/.test(validade)) return showError("Validade deve estar no formato MM/AA.");
+      if(!cvvVal || cvvVal.length<3) return showError("CVV inválido.");
+      if(!parcelas) return showError("Selecione a quantidade de parcelas.");
+
+      try{ 
+        const sel = await ClienteAuth.apiFetch(`/api/carrinho/pagamento?forma=CARTAO&parcelas=${encodeURIComponent(parcelas)}`, { method:'POST' });
+        if(!sel.ok){
+          const e = await sel.json().catch(()=>({detail:'Falha ao selecionar a forma de pagamento'}));
+          throw new Error(e.detail || 'Falha ao selecionar a forma de pagamento');
+        }
+
+        const fin = await fetch('/api/carrinho/finalizar', { method:'POST' });
+        if(!fin.ok){
+          const e = await fin.json().catch(()=>({detail:'Não foi possível finalizar'}));
+          throw new Error(e.detail || 'Não foi possível finalizar');
+        }
+        const recibo = await fin.json().catch(()=>null);
+        showOk("Pagamento aprovado! Finalizando…");
+        const pid = (recibo && (recibo.pedidoId || recibo.id)) || '';
+        setTimeout(()=>{ location.href = `/cliente-pedido.html?id=${encodeURIComponent(pid)}`; }, 600);
+      }catch(err){
+        showError(err.message || 'Erro ao processar pagamento.');
+      }
+    });
+  </script>
+</body>
+</html>

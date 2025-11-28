@@ -1,0 +1,7 @@
+2025-11-10 15:08:22.490929-03:00 jdbc[300]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "IMAGEM_PRODUTO" not found; SQL statement:
+SELECT * FROM imagem_produto WHERE produto_id IN (1,2,3,34) [42102-232]
+2025-11-10 15:09:49.009808-03:00 jdbc[300]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "IMAGEM_PRODUTO" not found; SQL statement:
+DELETE FROM imagem_produto
+WHERE produto_id IN (1,2,3,34) [42102-232]

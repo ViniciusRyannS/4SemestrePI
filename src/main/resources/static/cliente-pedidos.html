@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meus pedidos</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .pedido-card { margin-bottom:12px }
+    .pedido-header {
+      display:grid;
+      grid-template-columns: 1fr auto;
+      align-items:center;
+      gap:12px;
+    }
+    .pedido-titulo { font-weight:800; font-size:1.05rem }
+    .pedido-sub { color:#64748b; font-size:.9rem }
+    @media (max-width:640px){
+      .pedido-header { grid-template-columns: 1fr }
+    }
+  </style>
+</head>
+<body class="container">
+  <a class="btn btn-secondary" href="/index.html">← Voltar para a loja</a>
+
+  <h1 class="mt-12">Meus pedidos</h1>
+  <div id="lista"></div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+  (async function load(){
+    if(!(window.ClienteAuth && ClienteAuth.isLogged && ClienteAuth.isLogged())){
+      location.href='/cliente-login.html?returnUrl='+encodeURIComponent(location.pathname); return;
+    }
+
+    const r = await ClienteAuth.apiFetch('/api/clientes/pedidos');
+    if(!r.ok){
+      document.getElementById('lista').innerHTML =
+        '<div class="alert error">Não foi possível carregar seus pedidos.</div>';
+      return;
+    }
+    const arr = await r.json();
+    if(!arr.length){
+      document.getElementById('lista').innerHTML = '<div class="muted">Nenhum pedido.</div>'; return;
+    }
+
+    document.getElementById('lista').innerHTML = arr.map(p => {
+      const codigo = p.codigo || ('PO-'+String(p.id).padStart(6,'0'));
+      const criado = p.criadoEm ? new Date(p.criadoEm).toLocaleString('pt-BR') : '';
+      const total  = Number(p.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+      const entrega = [
+        p.endLogradouro, p.endNumero, (p.endComplemento ? ` - ${p.endComplemento}` : '')
+      ].filter(Boolean).join('');
+      const cidade = (p.endCidade && p.endUf) ? `${p.endCidade}/${p.endUf}` : '';
+      const cep    = p.endCep ? ` • CEP ${p.endCep}` : '';
+
+      return `
+        <div class="card pedido-card">
+          <div class="pedido-header">
+            <div>
+              <div class="pedido-titulo">
+                Pedido ${codigo} — <span class="tag">${p.status||'RECEBIDO'}</span>
+              </div>
+              <div class="pedido-sub">${criado}</div>
+            </div>
+            <a class="btn" href="/cliente-pedido.html?id=${p.id}">ver detalhes</a>
+          </div>
+
+          <div class="mt-8 muted">
+            Entrega: ${entrega} — ${cidade}${cep}
+          </div>
+          <div class="mt-8">
+            Frete: ${p.modalidadeFrete || '—'} • Total:
+            <strong>R$ ${total}</strong>
+          </div>
+        </div>
+      `;
+    }).join('');
+  })();
+  </script>
+</body>
+</html>

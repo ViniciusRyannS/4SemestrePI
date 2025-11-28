@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minha Conta • Perfil</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <style>
+    .wrap{max-width:900px;margin:24px auto;padding:0 12px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;background:#fff}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    label{font-weight:600;margin-top:8px;display:block}
+    input,select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px}
+    .hidden{display:none!important}
+    .list{border:1px solid #e5e7eb;border-radius:12px}
+    .item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid #eee}
+    .item:last-child{border-bottom:0}
+    .tag{padding:2px 8px;border-radius:999px;background:#e2e8f0;color:#475569;font-size:.8rem}
+    .tag.primary{background:#1d4ed8;color:#fff}
+    .btn{padding:8px 12px;border:0;border-radius:8px;background:#0f172a;color:#fff;cursor:pointer}
+    .btn.secondary{background:#e5e7eb;color:#0f172a}
+    .btn.danger{background:#dc2626}
+    .btn.link{background:transparent;color:#1d4ed8;text-decoration:underline}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .alert{margin:10px 0;padding:10px;border-radius:8px}
+    .alert.success{background:#e6ffed;color:#065f46}
+    .alert.error{background:#ffe8e8;color:#991b1b}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border:1px solid #cbd5e1;border-radius:999px;cursor:pointer}
+    .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+  </style>
+</head>
+<body>
+  <div class="gs-topstrip">
+    <div class="gs-topstrip__content">
+      <span>Adicione <strong>R$ 250,00</strong> ao carrinho para <strong>FRETE GRÁTIS</strong></span>
+      <a class="gs-link" href="/">← Voltar à loja</a>
+    </div>
+  </div>
+
+  <header class="gs-header">
+    <div class="gs-header__left">
+      <a href="/"><img src="/logo.png" alt="Logo" class="gs-logo" onerror="this.style.display='none'"></a>
+    </div>
+    <div class="gs-header__center">
+      <div class="gs-search">
+        <input id="searchBox" type="text" placeholder="Buscar na loja"/>
+        <button class="gs-search__btn" type="button" onclick="location.href='/'">🔍</button>
+      </div>
+    </div>
+    <div class="gs-header__right">
+      <a class="gs-link" href="/">🏬<span>Loja</span></a>
+      <a class="btn secondary" href="/cliente-pedidos.html">Meus pedidos</a>
+      <button id="btnLogout" class="btn btn-secondary">Sair</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <h2>Minha conta</h2>
+
+    <div class="toolbar" style="margin:12px 0">
+      <a class="btn secondary" href="/cliente-pedidos.html">Meus pedidos</a>
+    </div>
+
+    <div id="msg" class="alert hidden"></div>
+
+    <div class="tabs">
+      <button id="tabPerfil" class="tab active">Perfil</button>
+      <button id="tabEnd" class="tab">Endereços</button>
+    </div>
+
+    <section id="viewPerfil" class="card">
+      <form id="formPerfil">
+        <div class="row">
+          <div>
+            <label>Nome completo</label>
+            <input id="nomeCompleto" required/>
+          </div>
+          <div>
+            <label>Gênero</label>
+            <select id="genero">
+              <option value="">—</option>
+              <option value="FEMININO">Feminino</option>
+              <option value="MASCULINO">Masculino</option>
+              <option value="OUTRO">Outro</option>
+              <option value="NAO_INFORMAR">Prefiro não informar</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Data de nascimento</label>
+            <input id="dataNascimento" type="date"/>
+          </div>
+          <div>
+            <label>E-mail</label>
+            <input id="email" disabled/>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="btn" type="submit">Salvar alterações</button>
+          <a class="btn link" href="/cliente-login.html#login">Trocar de conta</a>
+          <a class="btn link" href="/cliente-login.html#login" onclick="localStorage.setItem('showChangePassword','1')">Alterar senha</a>
+        </div>
+      </form>
+    </section>
+
+
+    <section id="viewEnd" class="card hidden">
+      <div class="toolbar" style="justify-content:space-between;margin-bottom:8px">
+        <strong>Meus endereços</strong>
+        <button id="btnNovoEnd" class="btn secondary" type="button">+ Adicionar</button>
+      </div>
+
+      <div id="listaEnd" class="list"></div>
+
+      <div id="modalEnd" class="card hidden" style="margin-top:12px">
+        <h4>Novo endereço</h4>
+        <form id="formEnd">
+
+          <div class="row">
+            <div>
+              <label>CEP</label>
+              <input id="cep" maxlength="9" required placeholder="00000-000"/>
+            </div>
+            <div>
+              <label>Número</label>
+              <input id="numero" required/>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Complemento</label>
+              <input id="complemento"/>
+            </div>
+            <div style="display:flex;align-items:end;gap:8px">
+              <label class="chk"><input id="padrao" type="checkbox"/> Definir como padrão</label>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:12px">
+            <button class="btn" type="submit">Salvar</button>
+            <button id="btnCancelEnd" class="btn secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/cliente-auth.js"></script>
+  <script>
+    const msgEl = document.getElementById('msg');
+    function toast(m,t='success'){msgEl.textContent=m;msgEl.className='alert '+(t==='success'?'success':'error');msgEl.classList.remove('hidden'); setTimeout(()=>msgEl.classList.add('hidden'), 3500)}
+    function clearToast(){msgEl.classList.add('hidden')}
+
+    const cAuth = (window.ClienteAuth && ClienteAuth.getAuth && ClienteAuth.getAuth()) || null;
+    if(!cAuth?.token){
+      location.href = '/cliente-login.html?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+    }
+
+    const tabPerfil = document.getElementById('tabPerfil');
+    const tabEnd    = document.getElementById('tabEnd');
+    const viewPerfil= document.getElementById('viewPerfil');
+    const viewEnd   = document.getElementById('viewEnd');
+
+    tabPerfil.onclick = ()=>{ tabPerfil.classList.add('active'); tabEnd.classList.remove('active'); viewPerfil.classList.remove('hidden'); viewEnd.classList.add('hidden'); clearToast(); }
+    tabEnd.onclick    = ()=>{ tabEnd.classList.add('active'); tabPerfil.classList.remove('active'); viewEnd.classList.remove('hidden'); viewPerfil.classList.add('hidden'); clearToast(); listarEnd(); }
+
+    async function carregarMe(){
+      const res = await fetch('/api/clientes/me',{ headers:{Authorization:'Bearer '+cAuth.token}});
+      if(!res.ok){ toast('Não foi possível carregar dados','error'); return; }
+      const me = await res.json();
+      document.getElementById('nomeCompleto').value = me.nomeCompleto || '';
+      document.getElementById('genero').value       = me.genero || '';
+      document.getElementById('dataNascimento').value = me.dataNascimento || '';
+      document.getElementById('email').value        = me.email || '';
+    }
+    document.getElementById('formPerfil').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const payload = {
+        nomeCompleto: document.getElementById('nomeCompleto').value.trim(),
+        genero: document.getElementById('genero').value || null,
+        dataNascimento: document.getElementById('dataNascimento').value || null
+      };
+      const res = await fetch('/api/clientes/me',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+cAuth.token},
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok){ const err = await res.json().catch(()=>({detail:'Erro ao salvar'})); toast(err.detail || 'Erro ao salvar','error'); return; }
+      toast('Perfil atualizado!');
+      carregarMe();
+    });
+
+    const listaEnd   = document.getElementById('listaEnd');
+    const modalEnd   = document.getElementById('modalEnd');
+    const btnNovoEnd = document.getElementById('btnNovoEnd');
+    const btnCancelEnd = document.getElementById('btnCancelEnd');
+    const formEnd    = document.getElementById('formEnd');
+
+    btnNovoEnd.onclick = ()=>{
+      modalEnd.classList.remove('hidden');
+      clearToast();
+      document.getElementById('cep').focus();
+    };
+    btnCancelEnd.onclick = ()=> modalEnd.classList.add('hidden');
+
+    async function listarEnd(){
+      const res = await fetch('/api/clientes/enderecos',{ headers:{Authorization:'Bearer '+cAuth.token}});
+      if(!res.ok){ listaEnd.innerHTML = '<div class="item">Falha ao listar</div>'; return; }
+      const arr = await res.json();
+      listaEnd.innerHTML = arr.length ? arr.map(e=>`
+        <div class="item">
+          <div>
+            <div><strong>${e.tipo}</strong> — ${e.logradouro}, ${e.numero} ${e.complemento?('- '+e.complemento):''}</div>
+            <div class="muted">${e.bairro} — ${e.cidade}/${e.uf} • CEP ${e.cep}</div>
+          </div>
+          <span class="tag ${e.padrao?'primary':''}">${e.padrao?'padrão':'—'}</span>
+          <div class="toolbar">
+            ${e.tipo==='ENTREGA' ? `<button class="btn secondary" onclick="definirPadrao(${e.id})">Tornar padrão</button>`:''}
+            <button class="btn danger" onclick="removerEnd(${e.id})">Remover</button>
+          </div>
+        </div>
+      `).join('') : `<div class="item">Nenhum endereço cadastrado.</div>`;
+    }
+
+    async function definirPadrao(id){
+      const res = await fetch(`/api/clientes/enderecos/${id}/padrao?padrao=true`,{ method:'PATCH', headers:{Authorization:'Bearer '+cAuth.token}});
+      if(!res.ok){ toast('Não foi possível definir padrão','error'); return; }
+      toast('Endereço definido como padrão!'); listarEnd();
+    }
+    async function removerEnd(id){
+      const res = await fetch(`/api/clientes/enderecos/${id}`,{ method:'DELETE', headers:{Authorization:'Bearer '+cAuth.token}});
+      if(!res.ok){ toast('Não foi possível remover','error'); return; }
+      toast('Endereço removido!'); listarEnd();
+    }
+    window.definirPadrao = definirPadrao;
+    window.removerEnd    = removerEnd;
+
+    formEnd.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      const cepRaw   = (document.getElementById('cep').value||'').replace(/\D/g,'');
+      const numero   = (document.getElementById('numero').value||'').trim();
+      const compl    = (document.getElementById('complemento').value||'').trim();
+      const padrao   = !!document.getElementById('padrao').checked;
+
+      if(cepRaw.length !== 8){ toast('CEP deve ter 8 dígitos','error'); return; }
+      if(!numero){ toast('Informe o número','error'); return; }
+
+      const payload = {
+        tipo: 'ENTREGA',
+        cep: cepRaw,
+        numero: numero,
+        complemento: compl || null,
+        padrao: padrao
+      };
+
+      const res = await fetch('/api/clientes/enderecos', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+cAuth.token},
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const err = await res.json().catch(()=>({detail:'Falha ao salvar endereço'}));
+        toast(err.detail || 'Falha ao salvar endereço','error');
+        return;
+      }
+
+      toast('Endereço salvo!');
+
+      formEnd.reset();
+      modalEnd.classList.add('hidden');
+
+      listarEnd();
+    });
+
+    document.getElementById('btnLogout').onclick = ()=>{
+      if(window.ClienteAuth && ClienteAuth.logout) ClienteAuth.logout();
+      if(window.clearAuth) clearAuth();
+      location.href = '/';
+    };
+
+    carregarMe();
+  </script>
+</body>
+</html>
